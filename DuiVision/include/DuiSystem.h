@@ -17,10 +17,10 @@
 #define LANGUAGE_PAGE_CHINESE_SGP	0x1004	// 新加坡繁体
 
 //日志信息等级
-#define LOG_LEVEL_DEBUG 0x0001      //调试信息
-#define LOG_LEVEL_INFO	0x0002      //一般信息
-#define LOG_LEVEL_ERROR 0x0004      //错误信息
-#define LOG_LEVEL_CRITICAL 0x0008	//致命信息
+#define DUIV_LOG_LEVELDEBUG 0x0001      //调试信息
+#define DUIV_LOG_LEVELINFO	0x0002      //一般信息
+#define DUIV_LOG_LEVELERROR 0x0004      //错误信息
+#define DUIV_LOG_LEVELCRITICAL 0x0008	//致命信息
 
 // 操作系统类型定义
 enum OSType

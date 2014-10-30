@@ -581,7 +581,7 @@ LRESULT CDuiHandlerMain::OnDuiMsgBtnShowFlash4(UINT uID, CString strName, UINT M
 // DUI事件处理
 LRESULT CDuiHandlerMain::OnDuiMessage(UINT uID, CString strName, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
-	DuiSystem::LogEvent(LOG_LEVEL_DEBUG, _T("CDuiHandlerMain::OnDuiMessage:uID=%d, name=%s, msg=%d, wParam=%d, lParam=%d"),
+	DuiSystem::LogEvent(DUIV_LOG_LEVELDEBUG, _T("CDuiHandlerMain::OnDuiMessage:uID=%d, name=%s, msg=%d, wParam=%d, lParam=%d"),
 						uID, strName, Msg, wParam, lParam);
 
     return 0;

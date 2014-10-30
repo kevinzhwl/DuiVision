@@ -13,7 +13,7 @@ public:                                                             \
             );                                                      \
         if (nRet)                                        \
             return nRet;                                            \
-		DuiSystem::LogEvent(LOG_LEVEL_DEBUG,						\
+		DuiSystem::LogEvent(DUIV_LOG_LEVELDEBUG,						\
 		_T("%s::OnDuiMessage:uID=%d, name=%s, msg=%d, wParam=%d, lParam=%d"),	\
 		_T(#classname), uID, strName, Msg, wParam, lParam);						\
 

@@ -1645,7 +1645,7 @@ bool CDuiActiveX::DoCreateControl()
         Hr = ::CoCreateInstance(m_clsid, NULL, CLSCTX_ALL, IID_IOleControl, (LPVOID*)&pOleControl);
 		if( FAILED(Hr) )
 		{
-			DuiSystem::LogEvent(LOG_LEVEL_ERROR, _T("CoCreateInstance %s failed"), m_clsid);
+			DuiSystem::LogEvent(DUIV_LOG_LEVELERROR, _T("CoCreateInstance %s failed"), m_clsid);
 		}
 		// ¿Ø¼þ¼¤»î
 		OnAxActivate(pOleControl);

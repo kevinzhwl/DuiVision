@@ -45,7 +45,7 @@ DuiSystem::DuiSystem(HINSTANCE hInst, DWORD dwLangID, CString strResourceFile, U
 	HRESULT hr = CoInitialize(NULL);
 	if( FAILED(hr) )
 	{
-		DuiSystem::LogEvent(LOG_LEVEL_ERROR, _T("CoInitialize failed"));
+		DuiSystem::LogEvent(DUIV_LOG_LEVELERROR, _T("CoInitialize failed"));
 	}
 
 	//m_rich20=LoadLibrary(_T("riched20.dll"));
@@ -514,12 +514,12 @@ BYTE* DuiSystem::LoadZipFile(CString strFile, DWORD& dwSize)
 		dwSize = ze.unc_size;
 		if( dwSize == 0 )
 		{
-			DuiSystem::LogEvent(LOG_LEVEL_ERROR, _T("Load zip file %s failed, file is empty"), strFile);
+			DuiSystem::LogEvent(DUIV_LOG_LEVELERROR, _T("Load zip file %s failed, file is empty"), strFile);
 			return NULL;
 		}
 		if ( dwSize > 4096*1024 )
 		{
-			DuiSystem::LogEvent(LOG_LEVEL_ERROR, _T("Load zip file %s failed, file too large"), strFile);
+			DuiSystem::LogEvent(DUIV_LOG_LEVELERROR, _T("Load zip file %s failed, file too large"), strFile);
 			return NULL;
 		}
 		pByte = new BYTE[ dwSize ];
@@ -527,14 +527,14 @@ BYTE* DuiSystem::LoadZipFile(CString strFile, DWORD& dwSize)
 		if( res != 0x00000000 && res != 0x00000600)
 		{
 			delete[] pByte;
-			DuiSystem::LogEvent(LOG_LEVEL_ERROR, _T("Load zip file %s failed, could not unzip file"), strFile);
+			DuiSystem::LogEvent(DUIV_LOG_LEVELERROR, _T("Load zip file %s failed, could not unzip file"), strFile);
 			return NULL;
 		}
 
 		return pByte;
 	}else
 	{
-		DuiSystem::LogEvent(LOG_LEVEL_ERROR, _T("Load zip file %s failed, not found file"), strFile);
+		DuiSystem::LogEvent(DUIV_LOG_LEVELERROR, _T("Load zip file %s failed, not found file"), strFile);
 	}
 
 	return NULL;
@@ -593,7 +593,7 @@ BOOL DuiSystem::LoadXmlFile(DuiXmlDocument& xmlDoc, CString strFileName)
 				delete[] pByte;
 			}else
 			{
-				DuiSystem::LogEvent(LOG_LEVEL_ERROR, L"DuiSystem::LoadXmlFile %s failed, not found xml in zip file", strXmlFile);
+				DuiSystem::LogEvent(DUIV_LOG_LEVELERROR, L"DuiSystem::LoadXmlFile %s failed, not found xml in zip file", strXmlFile);
 				return FALSE;
 			}
 		}
@@ -613,7 +613,7 @@ BOOL DuiSystem::LoadXmlFile(DuiXmlDocument& xmlDoc, CString strFileName)
 		}else
 		{
 			// 文件不存在
-			DuiSystem::LogEvent(LOG_LEVEL_ERROR, L"DuiSystem::LoadXmlFile %s failed, not found xml file", strXmlFile);
+			DuiSystem::LogEvent(DUIV_LOG_LEVELERROR, L"DuiSystem::LoadXmlFile %s failed, not found xml file", strXmlFile);
 			return FALSE;
 		}
 	}
@@ -709,7 +709,7 @@ BOOL DuiSystem::LoadPluginFile(CString strFileName, CString strObjType, HINSTANC
 	{
 		// 加载失败
 		DWORD dwError = ::GetLastError();
-		DuiSystem::LogEvent(LOG_LEVEL_ERROR, L"Load UI plugin %s failed, errorcode is %u", strPluginFile, dwError);
+		DuiSystem::LogEvent(DUIV_LOG_LEVELERROR, L"Load UI plugin %s failed, errorcode is %u", strPluginFile, dwError);
 		return FALSE;
 	}
 
@@ -719,22 +719,22 @@ BOOL DuiSystem::LoadPluginFile(CString strFileName, CString strObjType, HINSTANC
 	if(fnCreateObject == NULL)
 	{
 		FreeLibrary(hPluginHandle);
-		DuiSystem::LogEvent(LOG_LEVEL_ERROR, L"Load UI plugin %s failed, not found CreateObject function", strPluginFile);
+		DuiSystem::LogEvent(DUIV_LOG_LEVELERROR, L"Load UI plugin %s failed, not found CreateObject function", strPluginFile);
 		return FALSE;
 	}
 
-	DuiSystem::LogEvent(LOG_LEVEL_DEBUG, L"Load UI plugin %s succ", strPluginFile);
+	DuiSystem::LogEvent(DUIV_LOG_LEVELDEBUG, L"Load UI plugin %s succ", strPluginFile);
 
 	LPVOID pIVciControl = NULL;
 	pPluginObj = fnCreateObject(CEncodingUtil::UnicodeToAnsi(strObjType), &pIVciControl, NULL);
 	if(pPluginObj == NULL)
 	{
 		FreeLibrary(hPluginHandle);
-		DuiSystem::LogEvent(LOG_LEVEL_ERROR, L"Create UI plugin %s - %s object failed", strPluginFile, strObjType);
+		DuiSystem::LogEvent(DUIV_LOG_LEVELERROR, L"Create UI plugin %s - %s object failed", strPluginFile, strObjType);
 		return FALSE;
 	}
 
-	DuiSystem::LogEvent(LOG_LEVEL_DEBUG, L"Create UI plugin %s - %s object succ", strPluginFile, strObjType);
+	DuiSystem::LogEvent(DUIV_LOG_LEVELDEBUG, L"Create UI plugin %s - %s object succ", strPluginFile, strObjType);
 
 	return TRUE;
 }
@@ -2346,13 +2346,13 @@ void DuiSystem::InitLog()
 	m_bLogEnable = TRUE;
 	InitializeCriticalSection(&m_WriteLogMutex);
 
-	DuiSystem::LogEvent(LOG_LEVEL_DEBUG, L"------------------DuiVision Start-------------------");
+	DuiSystem::LogEvent(DUIV_LOG_LEVELDEBUG, L"------------------DuiVision Start-------------------");
 }
 
 // 结束日志
 void DuiSystem::DoneLog()
 {
-	DuiSystem::LogEvent(LOG_LEVEL_DEBUG, L"------------------DuiVision End-------------------");
+	DuiSystem::LogEvent(DUIV_LOG_LEVELDEBUG, L"------------------DuiVision End-------------------");
 }
 
 // 记录日志
@@ -2418,19 +2418,19 @@ void DuiSystem::LogEvent(int nLevel, LPCWSTR lpFormat, ...)
 		GetLocalTime(&st);
 
 		CString strLevel;
-		if (nLevel == LOG_LEVEL_DEBUG)
+		if (nLevel == DUIV_LOG_LEVELDEBUG)
 		{
 			strLevel = __DEBUG;
 		}
-		else if (nLevel == LOG_LEVEL_INFO)
+		else if (nLevel == DUIV_LOG_LEVELINFO)
 		{
 			strLevel = __INFO;
 		}
-		else if (nLevel == LOG_LEVEL_ERROR)
+		else if (nLevel == DUIV_LOG_LEVELERROR)
 		{
 			strLevel = __ERROR;
 		}
-		else if (nLevel == LOG_LEVEL_CRITICAL)
+		else if (nLevel == DUIV_LOG_LEVELCRITICAL)
 		{
 			strLevel = __CRITICAL;
 		}

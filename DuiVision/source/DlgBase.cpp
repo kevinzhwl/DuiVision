@@ -219,7 +219,7 @@ void CDlgBase::TestMainThread()
     BOOL bOK = (m_nMainThreadId == dwCurThreadID); // 当前线程和构造对象时的线程一致
 	if(!bOK)
 	{
-		DuiSystem::LogEvent(LOG_LEVEL_ERROR, _T("TestMainThread failed"));
+		DuiSystem::LogEvent(DUIV_LOG_LEVELERROR, _T("TestMainThread failed"));
 	}
     ASSERT(bOK);
 }
