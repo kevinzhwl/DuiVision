@@ -18,6 +18,14 @@ CDuiHandlerTrayMenu::~CDuiHandlerTrayMenu(void)
 // ³õÊ¼»¯
 void CDuiHandlerTrayMenu::OnInit()
 {
+  {
+     CMenuItem* pDuiMenuItem = (CMenuItem*) GetControl(_T("menuitem.radio"));
+     if(pDuiMenuItem)
+     {
+       pDuiMenuItem->SetDuiHandler(this);
+     }
+  }
+ 
 
   {
     this->SetTitle(_T("close_app"),_T("ÍË³öAPP"));
@@ -35,6 +43,7 @@ void CDuiHandlerTrayMenu::OnInit()
     CMenuItem* pDuiMenuItem = (CMenuItem*)GetControl(m_radio_name);
     if(pDuiMenuItem)
     {
+      pDuiMenuItem->ResetGroupCheck();
       pDuiMenuItem->SetCheck(TRUE);
     } 
   }
