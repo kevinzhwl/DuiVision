@@ -109,6 +109,15 @@ void CMenuItem::ShowPopupMenu()
 		m_pPopupMenu = new CDuiMenu(DuiSystem::GetDefaultFont(), 12);
 		m_pPopupMenu->SetAutoClose(FALSE);
 		m_pPopupMenu->SetParent(this);
+
+    //20141028.kevinzhwl
+    //add set subMenu Initial Status by OnInit
+    if(m_pDuiHandler != NULL)
+    {
+      // 设置事件处理对象
+      m_pPopupMenu->RegisterHandler(m_pDuiHandler);
+    }
+    //////////////////////////////////////////////
 		CPoint point;
 		CRect rc = GetRect();
 		point.SetPoint(rc.left + rc.Width(), rc.top);
