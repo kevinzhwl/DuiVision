@@ -1753,6 +1753,7 @@ LRESULT CDlgBase::OnMessageUITask(WPARAM wParam, LPARAM lParam)
 // Tray消息
 LRESULT CDlgBase::OnSystemTrayIcon(WPARAM wParam, LPARAM lParam)
 {
+  static int s_dblclk_run = 0;
 	switch(lParam)
 	{
 	case WM_LBUTTONDBLCLK:
@@ -1769,15 +1770,58 @@ LRESULT CDlgBase::OnSystemTrayIcon(WPARAM wParam, LPARAM lParam)
 				ShowWindow(SW_NORMAL);
 				ShowWindow(SW_SHOW);
 				BringWindowToTop();
+        ::OutputDebugString (_T("DBLCLK \n"));;
 			}
+      s_dblclk_run = 1;
 		}
 		break;
 	case WM_LBUTTONDOWN:
-		{
-			// 发托盘左键单击消息
-			DuiSystem::AddDuiActionTask(TRAY_ICON, MSG_TRAY_LBUTTONDOWN, 0, 0, NAME_TRAY_ICON, _T(""), this);
-		}
-		break;
+    {
+
+
+      bool isEnableLButtonDownDelay = false;
+      CString strTrayLbClickMsgDelay = DuiSystem::Instance()->GetConfig(_T("trayLbClickMsgDelay"));
+      if(strTrayLbClickMsgDelay == _T("1"))
+      { isEnableLButtonDownDelay  = true;}
+
+      if(isEnableLButtonDownDelay)
+      {
+        if( s_dblclk_run ==0)
+        {
+          UINT dblDura = GetDoubleClickTime();
+          DWORD   st   =   GetTickCount();
+          while(true)
+          {
+          DWORD   et   =   GetTickCount();
+          if(et   -   st   >   dblDura)
+          {
+          ::OutputDebugString (_T("Break1 in L-CLK\n"));
+          break;
+          }
+          MSG   msgd;
+          ::PeekMessage(&msgd, NULL,0,0,PM_NOREMOVE );
+          }
+
+        }
+        else
+        {
+          s_dblclk_run =0;
+        }
+
+        if(s_dblclk_run == 1)
+        {
+          s_dblclk_run=0;
+          return 0;
+        }
+      }//isEnableLButtonDownDelay
+
+    ::OutputDebugString (_T("done in L-CLK\n"));
+    // 发托盘左键单击消息
+    DuiSystem::AddDuiActionTask(TRAY_ICON, MSG_TRAY_LBUTTONDOWN, 0, 0, NAME_TRAY_ICON, _T(""), this);
+    s_dblclk_run = 0;
+
+    }
+    break;
 	case WM_RBUTTONUP:
 		{
 			// 显示托盘菜单
