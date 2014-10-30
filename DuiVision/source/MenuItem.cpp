@@ -473,7 +473,7 @@ BOOL CMenuItem::OnControlLButtonUp(UINT nFlags, CPoint point)
 					{
 						m_bDown = !m_bDown;
 					}
-					bSend = false;
+					bSend = true;//false
 					bbDown = m_bDown;
 					bSelect = true;
 				}				
@@ -498,7 +498,9 @@ BOOL CMenuItem::OnControlLButtonUp(UINT nFlags, CPoint point)
 		}
 	}
 	m_bMouseDown = false;
-	
+
+	if(!m_bSelect)
+  {
 	if(buttonState != m_enButtonState)
 	{
 		UpdateControl();
@@ -509,6 +511,17 @@ BOOL CMenuItem::OnControlLButtonUp(UINT nFlags, CPoint point)
 		}
 		return true;
 	}
+  }
+  else if(!m_bIsDisable)
+  {
+		UpdateControl();
+
+		if(bSend)
+		{
+			SendMessage(MSG_BUTTON_UP, bbDown, bSelect);
+		}
+		return true;
+  }
 	return false;
 }
 
