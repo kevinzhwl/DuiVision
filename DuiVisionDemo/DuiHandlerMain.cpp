@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include "DuiHandlerMain.h"
 #include "registry.h"
-
+#include "DuiHandlerTrayMenu.h"
 
 #define XML_ABOUT_DLG L"<?xml version=\"1.0\" encoding=\"utf-8\"?>\
 <dlg name=\"dlg_about\" title=\"MsgBox\" width=\"450\" height=\"230\" appwin=\"0\" >\
@@ -45,7 +45,7 @@ CDuiHandlerMain::~CDuiHandlerMain(void)
 void CDuiHandlerMain::OnInit()
 {
 	// 初始化托盘图标
-	DuiSystem::Instance()->InitTray();
+	DuiSystem::Instance()->InitTray(new CDuiHandlerTrayMenu());
 	// 将tab页3注册事件处理对象
 	//DuiSystem::RegisterHandler(m_pDlg, new CDuiHandlerTab3(), _T("tab3"));
 	// 将工具页注册事件处理对象

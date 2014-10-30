@@ -120,6 +120,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="DuiHandlerMain.cpp" />
+    <ClCompile Include="DuiHandlerTrayMenu.cpp" />
     <ClCompile Include="DuiVisionDemo.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -128,6 +129,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DuiHandlerMain.h" />
+    <ClInclude Include="DuiHandlerTrayMenu.h" />
     <ClInclude Include="DuiVisionDemo.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
