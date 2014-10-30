@@ -4,8 +4,14 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DuiVision.2010", "DuiVision\DuiVision.2010.vcxproj", "{956C8DD0-B286-44FE-B190-7C3666CB6645}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DuiVisionDemo.2010", "DuiVisionDemo\DuiVisionDemo.2010.vcxproj", "{FC22C86E-283A-4CA4-BBCE-883E5D02058F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{956C8DD0-B286-44FE-B190-7C3666CB6645} = {956C8DD0-B286-44FE-B190-7C3666CB6645}
+	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DuiPluginDemo.2008", "DuiPluginDemo\DuiPluginDemo.2010.vcxproj", "{34ECFFC8-909B-4897-B0C5-3590CD21C0F7}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DuiPluginDemo.2010", "DuiPluginDemo\DuiPluginDemo.2010.vcxproj", "{34ECFFC8-909B-4897-B0C5-3590CD21C0F7}"
+	ProjectSection(ProjectDependencies) = postProject
+		{956C8DD0-B286-44FE-B190-7C3666CB6645} = {956C8DD0-B286-44FE-B190-7C3666CB6645}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
