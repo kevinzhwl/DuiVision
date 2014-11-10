@@ -16,6 +16,10 @@ CMenuItem::CMenuItem(HWND hWnd, CDuiObject* pDuiObject)
 
 	m_nLeft = 30;
 	m_nFrameWidth = 0;
+
+	m_clrHover = Color(254, 71, 156, 235);	// 鼠标移动到行显示的背景色
+	m_pImageHover = NULL;
+	m_sizeHover = CSize(0, 0);
 }
 
 CMenuItem::CMenuItem(HWND hWnd, CDuiObject* pDuiObject, UINT uControlID, CRect rc, CString strTitle/*= TEXT("")*/, int nLeft/* = 30*/, BOOL bSelect/* = false*/,
@@ -36,6 +40,10 @@ CMenuItem::CMenuItem(HWND hWnd, CDuiObject* pDuiObject, UINT uControlID, CRect r
 
 	m_strGroupName = _T("");
 	m_strValue = _T("");
+
+	m_clrHover = Color(254, 71, 156, 235);	// 鼠标移动到行显示的背景色
+	m_pImageHover = NULL;
+	m_sizeHover = CSize(0, 0);
 }
 
 CMenuItem::~CMenuItem(void)
@@ -109,6 +117,7 @@ void CMenuItem::ShowPopupMenu()
 		m_pPopupMenu = new CDuiMenu(DuiSystem::GetDefaultFont(), 12);
 		m_pPopupMenu->SetAutoClose(FALSE);
 		m_pPopupMenu->SetParent(this);
+		m_pPopupMenu->m_clrRowHover = m_clrHover;	// 设置菜单菜单的背景色
 
     //20141028.kevinzhwl
     //add set subMenu Initial Status by OnInit
@@ -605,8 +614,19 @@ void CMenuItem::DrawControl(CDC &dc, CRect rcUpdate)
 
 			if(enBSHover == i || (enBSDown == i && !m_bSelect) || enBSHoverDown == i)
 			{
-				SolidBrush brush(Color(254, 71, 156, 235));
-				graphics.FillRectangle(&brush, i * nWidth+m_nFrameWidth, 0, nWidth-m_nFrameWidth*2, nHeight);
+				// 画菜单项背景
+				if(m_pImageHover != NULL)
+				{
+					// 使用拉伸模式属性画图
+					graphics.DrawImage(m_pImageHover, RectF((Gdiplus::REAL)(i * nWidth+m_nFrameWidth), 0, (Gdiplus::REAL)(nWidth-m_nFrameWidth*2), (Gdiplus::REAL)nHeight),
+							0, 0, (Gdiplus::REAL)m_sizeHover.cx, (Gdiplus::REAL)m_sizeHover.cy, UnitPixel);
+				}else
+				{
+					// 使用颜色填充
+					SolidBrush brush(m_clrHover);//Color(254, 71, 156, 235));
+					graphics.FillRectangle(&brush, i * nWidth+m_nFrameWidth, 0, nWidth-m_nFrameWidth*2, nHeight);
+				}
+				
 			}
 
 			if(m_pImage != NULL)

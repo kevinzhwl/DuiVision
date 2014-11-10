@@ -17,11 +17,23 @@ CDuiMenu::CDuiMenu(CString strFont/* = TEXT("宋体")*/, int nFontWidth/* = 12*/, 
 	m_nTopHeight = 0;
 	m_nBottomHeight = 0;
 	m_nSeparatorHeight = 4;
+
+	m_clrRowHover = Color(254, 71, 156, 235);	// 鼠标移动到行显示的背景色
+	m_pImageRowHover = NULL;
+	m_sizeRowHover = CSize(0, 0);
 }
 
 CDuiMenu::~CDuiMenu(void)
 {
+	if(m_pImageRowHover != NULL)
+	{
+		delete m_pImageRowHover;
+		m_pImageRowHover = NULL;
+	}
 }
+
+// 图片属性的实现
+DUI_IMAGE_ATTRIBUTE_IMPLEMENT(CDuiMenu, RowHover, 1)
 
 BOOL CDuiMenu::Create(CWnd *pParent, CPoint point, UINT uMessageID, UINT nResourceID, int nFrameSize/* = 4*/, int nMinWidth/* = 112*/, enumBackMode enBackMode/* = enBMFrame*/)
 {
@@ -352,7 +364,7 @@ int CDuiMenu::AddMenu(CString strText, UINT uMenuID, int nResourceID, BOOL bSele
 	}
 
 	pControlBase = new CMenuItem(GetSafeHwnd(),this, uMenuID, CRect(0, 0, 0, 0), strText, m_nLeft, bSelect);
-	((CControlBaseFont *)pControlBase)->SetFont(m_strFont, m_nFontWidth, m_fontStyle);
+	((CControlBaseFont*)pControlBase)->SetFont(m_strFont, m_nFontWidth, m_fontStyle);
 	if(nResourceID != -1)
 	{
 		((CMenuItem *)pControlBase)->SetBitmap(nResourceID);
@@ -391,7 +403,7 @@ int CDuiMenu::AddMenu(CString strText, UINT uMenuID, CString strImage, BOOL bSel
 	}
 
 	pControlBase = new CMenuItem(GetSafeHwnd(),this, uMenuID, CRect(0, 0, 0, 0), strText, m_nLeft, bSelect);
-	((CControlBaseFont *)pControlBase)->SetFont(m_strFont, m_nFontWidth, m_fontStyle);
+	((CControlBaseFont*)pControlBase)->SetFont(m_strFont, m_nFontWidth, m_fontStyle);
 	if(!strImage.IsEmpty())
 	{
 		((CMenuItem *)pControlBase)->SetBitmap(strImage);
@@ -461,6 +473,15 @@ void CDuiMenu::SetMenuPoint()
 				// 普通菜单项
 				rc.SetRect(nXPos, nYPos, m_nWidth - 2, nYPos + m_nHeight);
 				nYPos += m_nHeight;
+				// 设置菜单项的鼠标移动时候的背景
+				if(m_pImageRowHover != NULL)
+				{
+					pMenuItem->m_pImageHover = m_pImageRowHover;
+					pMenuItem->m_sizeHover = m_sizeRowHover;
+				}else
+				{
+					pMenuItem->m_clrHover = m_clrRowHover;	// 设置菜单项的背景色
+				}
 			}
 			SetControlRect(pControlBase, rc);
 		}else
