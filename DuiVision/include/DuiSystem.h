@@ -62,6 +62,7 @@ class DuiSystem : public Singleton<DuiSystem>
 
 public:
     DuiSystem(HINSTANCE hInst, DWORD dwLangID = 0, CString strResourceFile = _T(""), UINT uAppID = 0, UINT nIDTemplate = 0, CString strStyle = _T(""));
+    DuiSystem(HINSTANCE hInst,DWORD dwLangID, CString strLogFile,  CString strResourceFile = _T(""), UINT uAppID = 0, UINT nIDTemplate = 0, CString strStyle = _T(""));
     ~DuiSystem(void);
 
 	static DuiSystem* Instance();

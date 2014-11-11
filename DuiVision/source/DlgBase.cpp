@@ -1825,6 +1825,7 @@ LRESULT CDlgBase::OnSystemTrayIcon(WPARAM wParam, LPARAM lParam)
     break;
 	case WM_RBUTTONUP:
 		{
+      DuiSystem::LogEvent(DUIV_LOG_LEVELINFO, _T("DlgBase::OnSystemTrayIcon:WM_RBUTTONUP"));
 			// 显示托盘菜单
 			CString strXmlFile = _T("menu_tray");
 			if(!m_strTrayMenuXml.IsEmpty())	// 如果设置了托盘菜单文件,则使用设置的文件
@@ -1860,8 +1861,11 @@ LRESULT CDlgBase::OnSystemTrayIcon(WPARAM wParam, LPARAM lParam)
 					pDuiMenu->MoveWindow(rc);
 					pDuiMenu->ShowWindow(SW_SHOW);
 					pDuiMenu->SetAutoClose(TRUE);
+          ::OutputDebugString (_T("DlgBase::OnSystemTrayIcon Popup Traymenu End\n"));
 				}else
 				{
+	        DuiSystem::LogEvent(DUIV_LOG_LEVELERROR, _T("DlgBase::OnSystemTrayIcon:LoadXMLFile %s failed"),strXmlFile);
+						
 					delete pDuiMenu;
 				}
 			}

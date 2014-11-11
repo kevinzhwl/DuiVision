@@ -12,6 +12,48 @@ static GdiplusStartupInput gdiplusStartupInput;
 
 DuiSystem::DuiSystem(HINSTANCE hInst, DWORD dwLangID, CString strResourceFile, UINT uAppID, UINT nIDTemplate, CString strStyle)
     :m_hInst(hInst), m_uAppID(uAppID)
+    ,m_strLogFile(_T(""))
+{
+	g_pIns = this;
+	m_dwLangID = dwLangID;
+	if((g_nIDTemplate == 0) && (nIDTemplate != 0))
+	{
+		g_nIDTemplate = nIDTemplate;
+	}
+	m_bLogEnable = FALSE;
+	m_pNotifyMsgBox = NULL;
+	m_strCurStyle = strStyle;
+	if(strResourceFile.IsEmpty())
+	{
+		m_strResourceFile = _T("xml\\resource.xml");
+	}else
+	{
+		m_strResourceFile = strResourceFile;
+	}
+	m_hResourceZip = NULL;
+
+	/*
+	// TinyXml设置为不压缩空格模式，默认是压缩空格，会导致超过一个的空格解析时候被转换为一个空格
+	TiXmlBase::SetCondenseWhiteSpace(false);
+	*/
+
+	ZeroMemory(&m_NotifyIconData, sizeof m_NotifyIconData);
+
+    createSingletons();
+
+	// 初始化COM库
+	HRESULT hr = CoInitialize(NULL);
+	if( FAILED(hr) )
+	{
+		DuiSystem::LogEvent(DUIV_LOG_LEVELERROR, _T("CoInitialize failed"));
+	}
+
+	//m_rich20=LoadLibrary(_T("riched20.dll"));
+	//if(m_rich20) m_funCreateTextServices= (PCreateTextServices)GetProcAddress(m_rich20,"CreateTextServices");
+}
+DuiSystem::DuiSystem(HINSTANCE hInst, DWORD dwLangID, CString strLogFile, CString strResourceFile, UINT uAppID, UINT nIDTemplate, CString strStyle)
+    :m_hInst(hInst), m_uAppID(uAppID)
+    ,m_strLogFile(strLogFile)
 	//,m_funCreateTextServices(NULL)
 {
 	g_pIns = this;
@@ -2335,13 +2377,22 @@ BOOL DuiSystem::SendInterprocessMessage(UINT uMsg, WPARAM wParam, LPARAM lParam,
 // 日志初始化
 void DuiSystem::InitLog()
 {
+  //
 	// 初始化日志文件路径和锁
+  if(m_strLogFile.IsEmpty())
+  {
 	CString strLogFile = GetConfig(_T("logfile"));
 	if(strLogFile.IsEmpty())
 	{
 		return;
 	}
 	m_strLogFile = GetExePath() + strLogFile;
+  }
+  else
+  {
+    m_strLogFile = m_strLogFile;
+  }
+
 	m_nLogLevel = _wtoi(GetConfig(_T("loglevel")));
 	m_bLogEnable = TRUE;
 	InitializeCriticalSection(&m_WriteLogMutex);
