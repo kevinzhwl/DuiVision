@@ -375,11 +375,20 @@ BOOL CMenuItem::OnControlMouseMove(UINT nFlags, CPoint point)
 			if(m_bIsPopup && (m_pPopupMenu != NULL))
 			{
 				// 检查父菜单的各个子菜单,看鼠标当前是否在其他菜单项上面
+        bool bToClosePopupMenu = false;
 				CDuiMenu* pParentMenu = GetParentMenu();
 				//CMenuItem* pHoverItem = pParentMenu->GetHoverMenuItem();
 				CMenuItem* pHoverItem = pParentMenu->GetMenuItemWithPoint(point);
 				if((pHoverItem != NULL) && (pHoverItem != this))
 				{
+          bToClosePopupMenu = true;
+        }
+        if(pHoverItem == NULL)
+        {
+          bToClosePopupMenu = true;//我承认这个改法有些冗长，但新增代码兼容了原有结构
+        }
+        if(bToClosePopupMenu)
+        {
 					// 如果鼠标在其他平级的菜单上,则关闭子菜单
 					if(IsWindow(m_pPopupMenu->GetSafeHwnd()))
 					{
