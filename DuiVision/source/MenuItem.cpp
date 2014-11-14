@@ -383,15 +383,17 @@ BOOL CMenuItem::OnControlMouseMove(UINT nFlags, CPoint point)
 				{
           bToClosePopupMenu = true;
         }
-        //if(pHoverItem == NULL)
-        //{
-        //  CPoint pt =point;
-        //  ::ClientToScreen(pParentMenu->GetSafeHwnd(), &pt);
-        //  ::ScreenToClient(m_pPopupMenu->GetSafeHwnd(),&pt);
-        //  CMenuItem* pHoverPopupItem = m_pPopupMenu->GetMenuItemWithPoint(pt);
-        //  if((pHoverPopupItem != NULL) && (pHoverPopupItem != this))
-        //      bToClosePopupMenu = true;//我承认这个改法有些冗长，但新增代码兼容了原有结构
-        //}
+        if(pHoverItem == NULL)
+        {
+          CPoint pt =point;
+          ::ClientToScreen(pParentMenu->GetSafeHwnd(), &pt);
+          //::ScreenToClient(m_pPopupMenu->GetSafeHwnd(),&pt);
+          CRect rcPopup;
+          m_pPopupMenu->GetWindowRect(rcPopup);
+
+          if(!rcPopup.PtInRect(pt))
+              bToClosePopupMenu = true;//我承认这个改法有些冗长，但新增代码兼容了原有结构
+        }
         if(bToClosePopupMenu)
         {
 					// 如果鼠标在其他平级的菜单上,则关闭子菜单
