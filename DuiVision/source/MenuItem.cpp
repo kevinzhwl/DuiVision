@@ -381,18 +381,23 @@ BOOL CMenuItem::OnControlMouseMove(UINT nFlags, CPoint point)
 				CMenuItem* pHoverItem = pParentMenu->GetMenuItemWithPoint(point);
 				if((pHoverItem != NULL) && (pHoverItem != this))
 				{
-          bToClosePopupMenu = true;
-        }
-        if(pHoverItem == NULL)
+                bToClosePopupMenu = true;
+                }
+        if(pHoverItem == NULL && (point != CPoint(-1, -1)))
         {
+            //兼容了原有结构
+            //鼠标快速移动到弹出菜单时，菜单会消失
+         
           CPoint pt =point;
           ::ClientToScreen(pParentMenu->GetSafeHwnd(), &pt);
           //::ScreenToClient(m_pPopupMenu->GetSafeHwnd(),&pt);
           CRect rcPopup;
           m_pPopupMenu->GetWindowRect(rcPopup);
+          CRect rcParent;
+          pParentMenu->GetWindowRect(rcParent);
 
-          if(!rcPopup.PtInRect(pt))
-              bToClosePopupMenu = true;//我承认这个改法有些冗长，但新增代码兼容了原有结构
+          if((!rcPopup.PtInRect(pt)) /*|| (!rcParent.PtInRect(pt))*/)
+              bToClosePopupMenu = true;
         }
         if(bToClosePopupMenu)
         {
