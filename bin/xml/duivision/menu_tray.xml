@@ -15,7 +15,7 @@
 	<menuitem name="menu_main" menu="menu_main" />
 	<menuitem name="menuitem_checkbox" skin="IDB_CHECK_BOX" select="1" check="true" title="检查框菜单" />
 	<menuitem name="menuitem.radio" title="Radio子菜单" width="150" skin="IDB_MENU_ARROW"
-		bkmode="frame" bkimg="skin:IDB_MENU_BACK" frame-width="3" top-height="0" bottom-height="0" >
+		bkmode="frame" bkimg="skin:IDB_MENU_BACK" frame-width="3" top-height="0" bottom-height="0" />
 	<menuitem name="menuitem_radio_1" skin="IDB_RADIO_BUTTON" select="1" title="RadioButton演示１"
 		check="true" group="menu_radio_group_1"  />
 	<menuitem name="menuitem_radio_2" skin="IDB_RADIO_BUTTON" select="1" title="RadioButton演示2"
@@ -33,6 +33,7 @@
 	<menuitem name="menuitem.runtest" title="执行进程" action="run:{platpath}DuiVisionDemo.2008d.exe|testcmd" />
 	<menuitem separator="1" skin="IDB_MENU_SEP" />
 	<menuitem name="item_help" skin="IDB_MENU_HELP" img-count="3" title="帮助" action="link:http://www.blueantstudio.net" />
+	<menuitem name="traymenu_quit" image="" title="退出" action="close-window:dlg_main" />
 	<menuitem name="menuitem.sub1" title="子菜单2" width="150"
 		bkmode="frame" bkimg="skin:IDB_MENU_BACK" frame-width="3" top-height="0" bottom-height="0" >
 		<menuitem name="360safe1" title="360安全卫士" action="dlg:dlg_login" />
