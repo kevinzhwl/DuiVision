@@ -10,6 +10,7 @@ CTextButton::CTextButton(HWND hWnd, CDuiObject* pDuiObject)
 	m_clrTextDown = Color(21, 112, 235);
 	m_clrTextDisable = Color(128, 128, 128);
 	m_bDown = FALSE;
+  m_bUseCursorSwap = FALSE;
 }
 
 CTextButton::CTextButton(HWND hWnd, CDuiObject* pDuiObject, UINT uControlID, CRect rc, CString strTitle,
@@ -23,6 +24,7 @@ CTextButton::CTextButton(HWND hWnd, CDuiObject* pDuiObject, UINT uControlID, CRe
 	m_clrTextDown = clrTextDown;
 	m_clrTextDisable = clrTextDisable;
 	m_bDown = FALSE;
+  m_bUseCursorSwap = FALSE;
 }
 
 CTextButton::~CTextButton(void)
@@ -43,6 +45,18 @@ BOOL CTextButton::OnControlMouseMove(UINT nFlags, CPoint point)
 			m_enButtonState = enBSNormal;
 		}
 	}
+
+  if(m_bUseCursorSwap)
+  {
+    if(buttonState == enBSHover ||buttonState == enBSDown )
+    {
+      ::SetCursor(::LoadCursor(NULL,IDC_HAND));
+    }
+    else
+    {
+      ::SetCursor(::LoadCursor(NULL,IDC_ARROW));
+    }
+  }
 
 	if(buttonState != m_enButtonState)
 	{

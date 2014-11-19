@@ -31,6 +31,7 @@ public:
 	CRect m_rcText;
 	enumButtonState m_enButtonState;
 	BOOL m_bDown;
+  BOOL m_bUseCursorSwap;
 
 	DUI_DECLARE_ATTRIBUTES_BEGIN()
 		DUI_COLOR_ATTRIBUTE(_T("crtext"), m_clrTextNormal, FALSE)
@@ -38,5 +39,6 @@ public:
 		DUI_COLOR_ATTRIBUTE(_T("crpush"), m_clrTextDown, FALSE)
 		DUI_COLOR_ATTRIBUTE(_T("crdisable"), m_clrTextDisable, FALSE)
 		DUI_TSTRING_ATTRIBUTE(_T("href"), m_strLink, FALSE)
+		DUI_BOOL_ATTRIBUTE(_T("cursorswap"), m_bUseCursorSwap, FALSE)
 	DUI_DECLARE_ATTRIBUTES_END()
 };

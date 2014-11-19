@@ -11,6 +11,7 @@ CLinkButton::CLinkButton(HWND hWnd, CDuiObject* pDuiObject)
 	m_clrTextDisable = Color(128, 128, 128);
 	m_strLink = _T("");
 	m_bDown = FALSE;
+  m_bUseCursorSwap = FALSE;
 }
 
 CLinkButton::CLinkButton(HWND hWnd, CDuiObject* pDuiObject, UINT uControlID, CRect rc, CString strTitle, CString strLink,
@@ -25,6 +26,7 @@ CLinkButton::CLinkButton(HWND hWnd, CDuiObject* pDuiObject, UINT uControlID, CRe
 	m_clrTextDisable = clrTextDisable;
 	m_strLink = strLink;
 	m_bDown = FALSE;
+  m_bUseCursorSwap = FALSE;
 }
 
 CLinkButton::~CLinkButton(void)
@@ -45,6 +47,18 @@ BOOL CLinkButton::OnControlMouseMove(UINT nFlags, CPoint point)
 			m_enButtonState = enBSNormal;
 		}
 	}
+
+  if(m_bUseCursorSwap)
+  {
+    if(buttonState == enBSHover ||buttonState == enBSDown )
+    {
+      ::SetCursor(::LoadCursor(NULL,IDC_HAND));
+    }
+    else
+    {
+      ::SetCursor(::LoadCursor(NULL,IDC_ARROW));
+    }
+  }
 
 	if(buttonState != m_enButtonState)
 	{
