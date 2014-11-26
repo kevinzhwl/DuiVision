@@ -341,8 +341,11 @@ void CDuiButton::DrawControl(CDC &dc, CRect rcUpdate)
 			}
 		}
 	}
-
-	if(m_nIndex != 0 && m_bRunTime && m_bTimer)
+  
+  if(m_bIsDisable && ( m_enButtonState != enBSDisable) ) 
+  { m_enButtonState = enBSDisable ;}
+	
+  if(m_nIndex != 0 && m_bRunTime && m_bTimer)
 	{
 		dc.BitBlt(m_rc.left,m_rc.top, m_rc.Width(), m_rc.Height(), &m_memDC, (4 + m_nIndex - 1) * nWidth, 0, SRCCOPY);
 	}
