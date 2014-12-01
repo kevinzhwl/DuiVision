@@ -917,7 +917,19 @@ HRESULT CControlBase::OnAttributeMenuPosChange(const CString& strValue, BOOL bLo
 // 从XML设置快捷键信息属性
 HRESULT CControlBase::OnAttributeShortcut(const CString& strValue, BOOL bLoading)
 {
+	if (strValue.IsEmpty()) return E_FAIL;
+
 	CDuiObject::ParseKeyCode(strValue, m_nShortcutKey, m_nShortcutFlag);
+
+	return bLoading?S_FALSE:S_OK;
+}
+
+// 从XML设置禁用属性
+HRESULT CControlBase::OnAttributeDisable(const CString& strValue, BOOL bLoading)
+{
+	if (strValue.IsEmpty()) return E_FAIL;
+
+	SetControlDisable(::StrToInt(strValue) > 0 ? true : false);
 
 	return bLoading?S_FALSE:S_OK;
 }
@@ -1539,7 +1551,7 @@ BOOL CControlBaseFont::SetBitmap(UINT nResourceID, CString strType)
 		m_pImage = NULL;
 	}
 
-	if(ImageFromIDResource(nResourceID, strType, m_pImage))
+	if(LoadImageFromIDResource(nResourceID, strType, m_bImageUseECM, m_pImage))
 	{
 		m_sizeImage.SetSize(m_pImage->GetWidth() / m_nImagePicCount, m_pImage->GetHeight());
 		UpdateControl(true);

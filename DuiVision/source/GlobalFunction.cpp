@@ -3,8 +3,8 @@
 #include <cmath>
 #include "GlobalFunction.h"
 
-// 读取图片
-BOOL LoadImage(const CString strPathFile, CBitmap &bitmap, CSize &size)
+// 读取图片(从文件读)
+BOOL LoadBitmapFromFile(const CString strPathFile, CBitmap &bitmap, CSize &size)
 {	
 	HBITMAP hBitmap = NULL;
 	Bitmap* pBitmap = Bitmap::FromFile(strPathFile);
@@ -27,15 +27,15 @@ BOOL LoadImage(const CString strPathFile, CBitmap &bitmap, CSize &size)
 
 			delete pBitmap;
 
-			return true;
+			return TRUE;
 		}
 	}
 
-	return false;
+	return FALSE;
 }
 
-// 读取图片
-BOOL LoadImage(UINT nID, CBitmap &bitmap, CSize &size, CString strType)
+// 读取图片(从资源读)
+BOOL LoadBitmapFromIDResource(UINT nID, CBitmap &bitmap, CSize &size, CString strType)
 {
 	HINSTANCE hInst = AfxGetResourceHandle();  
 	HRSRC hRsrc = ::FindResource (hInst,MAKEINTRESOURCE(nID), strType);
@@ -61,6 +61,69 @@ BOOL LoadImage(UINT nID, CBitmap &bitmap, CSize &size, CString strType)
 	pstm->Release();  
 	FreeResource(lpRsrc); 
 
+	HBITMAP hBitmap = NULL;
+	Status status = pBitmap->GetLastStatus();
+	if(Ok == status)
+	{		
+		status = pBitmap->GetHBITMAP(Color(0,0,0), &hBitmap);
+		delete pBitmap;
+
+		if(Ok == status)
+		{
+			if(bitmap.m_hObject != NULL)
+			{
+				bitmap.Detach();
+			}
+			bitmap.Attach(hBitmap);
+
+			BITMAP bmInfo;
+			::GetObject( bitmap.m_hObject, sizeof(BITMAP), &bmInfo );
+			size.cx = bmInfo.bmWidth;
+			size.cy = bmInfo.bmHeight;				
+
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
+// 读取图片(从内存中加载)
+BOOL LoadBitmapFromMem(BYTE* pByte, DWORD dwSize, CBitmap &bitmap, CSize &size)
+{
+	// 根据文件大小分配HGLOBAL内存
+	HGLOBAL hGlobal = GlobalAlloc( GMEM_MOVEABLE | GMEM_NODISCARD, dwSize );
+	if ( !hGlobal )
+	{
+		TRACE( _T( "Load (file): Error allocating memory\n" ) );
+		return FALSE;
+	};
+
+	char *pData = reinterpret_cast<char*>(GlobalLock(hGlobal));
+	if ( !pData )
+	{
+		TRACE( _T( "Load (file): Error locking memory\n" ) );
+		GlobalFree( hGlobal );
+		return FALSE;
+	};
+
+	// 将文件内容读到HGLOBAL内存中
+	memcpy(pData, pByte, dwSize);
+	GlobalUnlock( hGlobal );
+
+	// 利用hGlobal内存中的数据创建stream
+	IStream *pStream = NULL;
+	if ( CreateStreamOnHGlobal( hGlobal, TRUE, &pStream ) != S_OK )
+	{
+		return FALSE;
+	}
+
+	Bitmap* pBitmap = Gdiplus::Bitmap::FromStream(pStream);
+
+	// 要加上这一句，否则由GlobalAlloc得来的hGlobal内存没有被释放，导致内存泄露，由于
+	// CreateStreamOnHGlobal第二个参数被设置为TRUE，所以调用pStream->Release()会自动
+	// 将hGlobal内存（参见msdn对CreateStreamOnHGlobal的说明）
+	pStream->Release();
 
 	HBITMAP hBitmap = NULL;
 	Status status = pBitmap->GetLastStatus();
@@ -82,44 +145,15 @@ BOOL LoadImage(UINT nID, CBitmap &bitmap, CSize &size, CString strType)
 			size.cx = bmInfo.bmWidth;
 			size.cy = bmInfo.bmHeight;				
 
-			return true;
+			return TRUE;
 		}
 	}
 
-	return true; 
+	return FALSE;
 }
 
-// 从资源中加载图片
-BOOL ImageFromIDResource(UINT nID, CString strType, Image * & pImg)  
-{  
-	HINSTANCE hInst = AfxGetResourceHandle();  
-	HRSRC hRsrc = ::FindResource (hInst,MAKEINTRESOURCE(nID),strType);
-	if (!hRsrc)  
-	{
-		return FALSE; 
-	}
-
-	DWORD len = SizeofResource(hInst, hRsrc);  
-	BYTE* lpRsrc = (BYTE*)LoadResource(hInst, hRsrc);  
-	if (!lpRsrc)  
-	{
-		return FALSE;
-	}
-	HGLOBAL m_hMem = GlobalAlloc(GMEM_FIXED, len);  
-	BYTE* pmem = (BYTE*)GlobalLock(m_hMem);  
-	memcpy(pmem,lpRsrc,len);  
-	IStream* pstm;  
-	CreateStreamOnHGlobal(m_hMem,FALSE,&pstm);  
-	pImg=Gdiplus::Image::FromStream(pstm);  
-	GlobalUnlock(m_hMem);  
-	//GlobalFree(m_hMem);
-	pstm->Release();  
-	FreeResource(lpRsrc);  
-	return TRUE;  
-} 
-
 // 加载图片文件到内存中
-BOOL ImageFromFile(CString strFile, BOOL useEmbeddedColorManagement, Image * & pImg)
+BOOL LoadImageFromFile(CString strFile, BOOL useEmbeddedColorManagement, Image*& pImg)
 {
 	//pImg = Image::FromFile(strFile, useEmbeddedColorManagement);
 	//return (pImg->GetLastStatus() == Ok);
@@ -194,8 +228,46 @@ BOOL ImageFromFile(CString strFile, BOOL useEmbeddedColorManagement, Image * & p
 	return TRUE;
 }
 
+// 从资源中加载图片
+BOOL LoadImageFromIDResource(UINT nID, CString strType, BOOL useEmbeddedColorManagement, Image*& pImg)  
+{  
+	HINSTANCE hInst = AfxGetResourceHandle();
+	HRSRC hRsrc = ::FindResource (hInst,MAKEINTRESOURCE(nID),strType);
+	if (!hRsrc)
+	{
+		pImg = NULL;
+		return FALSE;
+	}
+
+	DWORD len = SizeofResource(hInst, hRsrc);
+	BYTE* lpRsrc = (BYTE*)LoadResource(hInst, hRsrc);
+	if (!lpRsrc)
+	{
+		pImg = NULL;
+		return FALSE;
+	}
+	HGLOBAL m_hMem = GlobalAlloc(GMEM_FIXED, len);
+	BYTE* pmem = (BYTE*)GlobalLock(m_hMem);
+	memcpy(pmem, lpRsrc, len);
+	IStream* pStream = NULL;
+	if ( CreateStreamOnHGlobal( m_hMem, FALSE, &pStream ) != S_OK )
+	{
+		pImg = NULL;
+		return FALSE;
+	}
+
+	pImg = Gdiplus::Image::FromStream(pStream, useEmbeddedColorManagement);
+
+	GlobalUnlock(m_hMem);
+	//GlobalFree(m_hMem);
+	pStream->Release();
+	FreeResource(lpRsrc);
+
+	return TRUE;
+}
+
 // 从内存中加载图片文件
-BOOL ImageFromMem(BYTE* pByte, DWORD dwSize, BOOL useEmbeddedColorManagement, Image * & pImg)
+BOOL LoadImageFromMem(BYTE* pByte, DWORD dwSize, BOOL useEmbeddedColorManagement, Image*& pImg)
 {
 	// 根据文件大小分配HGLOBAL内存
 	HGLOBAL hGlobal = GlobalAlloc( GMEM_MOVEABLE | GMEM_NODISCARD, dwSize );

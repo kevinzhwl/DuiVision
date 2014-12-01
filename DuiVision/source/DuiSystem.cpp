@@ -124,6 +124,9 @@ DuiSystem::~DuiSystem(void)
 	m_mapStringPool.RemoveAll();
 	m_mapFontPool.RemoveAll();
 
+	// 释放图片缓存
+	ClearAllCachedMemFile();
+
 	if(m_hResourceZip != NULL)
 	{
 		CloseZip(m_hResourceZip);
@@ -310,6 +313,9 @@ BOOL DuiSystem::LoadResource()
 	m_mapSkinPool.RemoveAll();
 	m_mapStringPool.RemoveAll();
 	m_mapFontPool.RemoveAll();
+
+	// 释放图片缓存
+	ClearAllCachedMemFile();
 
 	CString strResFile = GetExePath() + m_strResourceFile;
 	if(strResFile.Find(_T(".ui")) != -1)
@@ -548,6 +554,16 @@ BYTE* DuiSystem::LoadZipFile(CString strFile, DWORD& dwSize)
 	// Zip文件中的路径都使用/
 	strFile.Replace(_T("\\"), _T("/"));
 
+	// 判断文件是否已经被缓存,如果已经缓存就返回缓存的数据
+	MemFileInfo memFile;
+	memFile.dwSize = 0;
+	memFile.pByte = NULL;
+	if(GetCachedMemFile(strFile, memFile))
+	{
+		dwSize = memFile.dwSize;
+		return memFile.pByte;
+	}
+
 	BYTE* pByte = NULL;
 	ZENTRY ze;
 	int i;
@@ -573,6 +589,11 @@ BYTE* DuiSystem::LoadZipFile(CString strFile, DWORD& dwSize)
 			return NULL;
 		}
 
+		// 更新缓存数据
+		memFile.dwSize = dwSize;
+		memFile.pByte = pByte;
+		SetCachedMemFile(strFile, memFile);
+
 		return pByte;
 	}else
 	{
@@ -580,6 +601,38 @@ BYTE* DuiSystem::LoadZipFile(CString strFile, DWORD& dwSize)
 	}
 
 	return NULL;
+}
+
+// 获取缓存的内存文件信息
+BOOL DuiSystem::GetCachedMemFile(CString strFile, MemFileInfo& memFile)
+{
+	strFile.MakeLower();
+	return m_mapMemFileCatch.Lookup(strFile, memFile);
+}
+
+// 设置缓存的内存文件信息
+void DuiSystem::SetCachedMemFile(CString strFile, MemFileInfo& memFile)
+{
+	strFile.MakeLower();
+	m_mapMemFileCatch.SetAt(strFile, memFile);
+}
+
+// 清除所有内存文件缓存
+void DuiSystem::ClearAllCachedMemFile()
+{
+	POSITION pos = m_mapMemFileCatch.GetStartPosition();
+	CString szFile;
+	MemFileInfo memFile;
+	while(pos != NULL)
+	{
+		m_mapMemFileCatch.GetNextAssoc(pos, szFile, memFile);
+		if(memFile.pByte != NULL)
+		{
+			delete[] memFile.pByte;
+			memFile.pByte = NULL;
+		}
+	}
+	m_mapMemFileCatch.RemoveAll();
 }
 
 // 加载XML文件,支持从zip文件中加载
@@ -632,7 +685,7 @@ BOOL DuiSystem::LoadXmlFile(DuiXmlDocument& xmlDoc, CString strFileName)
 			if(pByte != NULL)
 			{
 				xmlResult = xmlDoc.load(CA2T((char*)pByte, CP_UTF8), NULL);
-				delete[] pByte;
+				//delete[] pByte;
 			}else
 			{
 				DuiSystem::LogEvent(DUIV_LOG_LEVELERROR, L"DuiSystem::LoadXmlFile %s failed, not found xml in zip file", strXmlFile);
@@ -666,18 +719,18 @@ BOOL DuiSystem::LoadXmlFile(DuiXmlDocument& xmlDoc, CString strFileName)
 // 加载图片文件,支持从zip文件中加载
 BOOL DuiSystem::LoadImageFile(CString strFileName, BOOL useEmbeddedColorManagement, Image*& pImage)
 {
-	//BOOL bRet = ImageFromFile(strFileName, useEmbeddedColorManagement, pImage);
+	//BOOL bRet = LoadImageFromFile(strFileName, useEmbeddedColorManagement, pImage);
 	BOOL bRet = FALSE;
 	if(m_hResourceZip != NULL)	// 存在资源zip文件
 	{
 		// 即使有zip文件的情况下,也优先使用目录中的文件
 		if(GetFileAttributes(DuiSystem::GetSkinPath() + strFileName) != 0xFFFFFFFF)	// 从skin路径开始查找
 		{
-			bRet = ImageFromFile(DuiSystem::GetSkinPath() + strFileName, useEmbeddedColorManagement, pImage);
+			bRet = LoadImageFromFile(DuiSystem::GetSkinPath() + strFileName, useEmbeddedColorManagement, pImage);
 		}else
 		if(GetFileAttributes(strFileName) != 0xFFFFFFFF)	// 绝对路径查找
 		{
-			bRet = ImageFromFile(strFileName, useEmbeddedColorManagement, pImage);
+			bRet = LoadImageFromFile(strFileName, useEmbeddedColorManagement, pImage);
 		}else
 		{
 			DWORD dwSize = 0;
@@ -688,8 +741,8 @@ BOOL DuiSystem::LoadImageFile(CString strFileName, BOOL useEmbeddedColorManageme
 			}
 			if(pByte != NULL)
 			{
-				bRet = ImageFromMem(pByte, dwSize, useEmbeddedColorManagement, pImage);
-				delete[] pByte;
+				bRet = LoadImageFromMem(pByte, dwSize, useEmbeddedColorManagement, pImage);
+				//delete[] pByte;
 			}else
 			{
 				return FALSE;
@@ -699,11 +752,60 @@ BOOL DuiSystem::LoadImageFile(CString strFileName, BOOL useEmbeddedColorManageme
 	{
 		if(GetFileAttributes(DuiSystem::GetSkinPath() + strFileName) != 0xFFFFFFFF)	// 从skin路径开始查找
 		{
-			bRet = ImageFromFile(DuiSystem::GetSkinPath() + strFileName, useEmbeddedColorManagement, pImage);
+			bRet = LoadImageFromFile(DuiSystem::GetSkinPath() + strFileName, useEmbeddedColorManagement, pImage);
 		}else
 		if(GetFileAttributes(strFileName) != 0xFFFFFFFF)	// 绝对路径查找
 		{
-			bRet = ImageFromFile(strFileName, useEmbeddedColorManagement, pImage);
+			bRet = LoadImageFromFile(strFileName, useEmbeddedColorManagement, pImage);
+		}else
+		{
+			// 文件不存在
+			return FALSE;
+		}
+	}
+	return bRet;
+}
+
+// 加载图片文件,支持从zip文件中加载
+BOOL DuiSystem::LoadBitmapFile(CString strFileName, CBitmap &bitmap, CSize &size)
+{
+	BOOL bRet = FALSE;
+	if(m_hResourceZip != NULL)	// 存在资源zip文件
+	{
+		// 即使有zip文件的情况下,也优先使用目录中的文件
+		if(GetFileAttributes(DuiSystem::GetSkinPath() + strFileName) != 0xFFFFFFFF)	// 从skin路径开始查找
+		{
+			bRet = LoadBitmapFromFile(DuiSystem::GetSkinPath() + strFileName, bitmap, size);
+		}else
+		if(GetFileAttributes(strFileName) != 0xFFFFFFFF)	// 绝对路径查找
+		{
+			bRet = LoadBitmapFromFile(strFileName, bitmap, size);
+		}else
+		{
+			DWORD dwSize = 0;
+			BYTE* pByte = LoadZipFile(strFileName, dwSize);
+			if(pByte == NULL)
+			{
+				pByte = LoadZipFile(_T("skins\\") + strFileName, dwSize);	// 尝试从skins子目录加载
+			}
+			if(pByte != NULL)
+			{
+				bRet = LoadBitmapFromMem(pByte, dwSize, bitmap, size);
+				//delete[] pByte;
+			}else
+			{
+				return FALSE;
+			}
+		}
+	}else
+	{
+		if(GetFileAttributes(DuiSystem::GetSkinPath() + strFileName) != 0xFFFFFFFF)	// 从skin路径开始查找
+		{
+			bRet = LoadBitmapFromFile(DuiSystem::GetSkinPath() + strFileName, bitmap, size);
+		}else
+		if(GetFileAttributes(strFileName) != 0xFFFFFFFF)	// 绝对路径查找
+		{
+			bRet = LoadBitmapFromFile(strFileName, bitmap, size);
 		}else
 		{
 			// 文件不存在
