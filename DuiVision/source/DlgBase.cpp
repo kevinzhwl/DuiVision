@@ -1855,11 +1855,15 @@ LRESULT CDlgBase::OnSystemTrayIcon(WPARAM wParam, LPARAM lParam)
 					CRect rc;
 					pDuiMenu->GetWindowRect(&rc);
 					rc.OffsetRect(0, -rc.Height());
-					// 如果超出屏幕右侧范围,则菜单窗口往左移动一些
-					int nScreenWidth= GetSystemMetrics(SM_CXFULLSCREEN);
+					// 如果超出屏幕右侧范围,则菜单窗口往左移动一些//SM_CXFULLSCREEN
+					int nScreenWidth= GetSystemMetrics(SM_CXSCREEN);
 					if(rc.right > nScreenWidth)
 					{
-						rc.OffsetRect(nScreenWidth - rc.right -10, 0);
+						rc.OffsetRect(nScreenWidth - rc.right /*-10*/, 0);
+					}
+					if(rc.top <0)
+					{
+						rc.OffsetRect(0,rc.Height());
 					}
 					pDuiMenu->MoveWindow(rc);
 					pDuiMenu->ShowWindow(SW_SHOW);
