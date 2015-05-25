@@ -18,6 +18,9 @@ CMenuItem::CMenuItem(HWND hWnd, CDuiObject* pDuiObject)
 	m_nFrameWidth = 0;
 
 	m_clrHover = Color(254, 71, 156, 235);	// 鼠标移动到行显示的背景色
+  m_clrHoverText =  Color(254, 255, 255, 255);
+  m_clrNormalText = Color(254, 56, 56, 56);
+  m_clrDisabledText =  Color(254, 128, 128, 128);
 	m_pImageHover = NULL;
 	m_sizeHover = CSize(0, 0);
 	m_pImagePopupArrow = NULL;
@@ -44,6 +47,10 @@ CMenuItem::CMenuItem(HWND hWnd, CDuiObject* pDuiObject, UINT uControlID, CRect r
 	m_strValue = _T("");
 
 	m_clrHover = Color(254, 71, 156, 235);	// 鼠标移动到行显示的背景色
+  m_clrHoverText =  Color(254, 255, 255, 255);
+  m_clrNormalText = Color(254, 56, 56, 56);
+  m_clrDisabledText =  Color(254, 128, 128, 128);
+
 	m_pImageHover = NULL;
 	m_sizeHover = CSize(0, 0);
 	m_pImagePopupArrow = NULL;
@@ -705,7 +712,7 @@ void CMenuItem::DrawControl(CDC &dc, CRect rcUpdate)
 
 			for(int i = 0; i < nImageCount; i++)
 			{
-				SolidBrush solidBrush(enBSDisable == i ? Color(254, 128, 128, 128) : (enBSHover == i || (enBSDown == i && !m_bSelect) || enBSHoverDown == i ? Color(254, 255, 255, 255) : Color(254, 56, 56, 56)));
+				SolidBrush solidBrush(enBSDisable == i ? m_clrDisabledText : (enBSHover == i || (enBSDown == i && !m_bSelect) || enBSHoverDown == i ? m_clrHoverText : m_clrNormalText));
 
 				RectF rect((Gdiplus::REAL)(m_nLeft + point.x + i * nWidth), (Gdiplus::REAL)point.y, (Gdiplus::REAL)(nWidth - (m_nLeft + point.x)), (Gdiplus::REAL)size.Height);
 				BSTR bsTitle = m_strTitle.AllocSysString();

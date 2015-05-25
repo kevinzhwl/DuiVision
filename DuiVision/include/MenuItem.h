@@ -76,6 +76,9 @@ public:
 	CSize				m_sizeHover;		// 背景图片大小
 	Image*				m_pImagePopupArrow;	// 弹出菜单箭头图片
 	CSize				m_sizePopupArrow;	// 弹出菜单箭头图片大小
+	Color		m_clrHoverText;
+	Color		m_clrNormalText;
+	Color		m_clrDisabledText;
 
 	DUI_DECLARE_ATTRIBUTES_BEGIN()
 		DUI_INT_ATTRIBUTE(_T("select"), m_bSelect, FALSE)

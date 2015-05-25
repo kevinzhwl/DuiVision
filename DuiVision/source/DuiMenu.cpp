@@ -19,6 +19,7 @@ CDuiMenu::CDuiMenu(CString strFont/* = TEXT("宋体")*/, int nFontWidth/* = 12*/, 
 	m_nSeparatorHeight = 4;
 
 	m_clrRowHover = Color(254, 71, 156, 235);	// 鼠标移动到行显示的背景色
+	m_clrRowHoverText = Color(254, 255, 255, 255);	// 鼠标移动到行显示的背景色
 	m_pImageRowHover = NULL;
 	m_sizeRowHover = CSize(0, 0);
 	m_pImagePopupArrow = NULL;
@@ -489,6 +490,7 @@ void CDuiMenu::SetMenuPoint()
 				}else
 				{
 					pMenuItem->m_clrHover = m_clrRowHover;	// 设置菜单项的背景色
+					pMenuItem->m_clrHoverText = m_clrRowHoverText;	// 设置菜单项的文字色
 				}
 				// 设置菜单项的弹出菜单箭头图片
 				if(m_pImagePopupArrow != NULL)

@@ -91,6 +91,9 @@ public:
 	CWnd*		m_pParent;				// 父窗口
 
 	Color		m_clrRowHover;			// 行背景颜色(鼠标移动到菜单项)
+	Color		m_clrRowHoverText;
+	Color		m_clrRowNormalText;
+	Color		m_clrRowDisabledText;
 
 	vector<MenuItemValue> m_vecMenuItemValue;	// 菜单项预设置信息
 
@@ -107,6 +110,7 @@ public:
 		DUI_INT_ATTRIBUTE(_T("left"), m_nLeft, FALSE)
 		DUI_INT_ATTRIBUTE(_T("sep-height"), m_nSeparatorHeight, FALSE)
 		DUI_COLOR_ATTRIBUTE(_T("crrowhover"), m_clrRowHover, FALSE)
+		DUI_COLOR_ATTRIBUTE(_T("crrowhovertext"), m_clrRowHoverText, FALSE)
 		DUI_CUSTOM_ATTRIBUTE(_T("img-rowhover"), OnAttributeImageRowHover)
 		DUI_CUSTOM_ATTRIBUTE(_T("img-popuparrow"), OnAttributeImagePopupArrow)
 	DUI_DECLARE_ATTRIBUTES_END()
