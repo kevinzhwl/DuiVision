@@ -1774,7 +1774,6 @@ LRESULT CDlgBase::OnSystemTrayIcon(WPARAM wParam, LPARAM lParam)
 				ShowWindow(SW_NORMAL);
 				ShowWindow(SW_SHOW);
 				BringWindowToTop();
-        ::OutputDebugString (_T("DBLCLK \n"));;
 			}
       s_dblclk_run = 1;
 		}
@@ -1799,7 +1798,6 @@ LRESULT CDlgBase::OnSystemTrayIcon(WPARAM wParam, LPARAM lParam)
           DWORD   et   =   GetTickCount();
           if(et   -   st   >   dblDura)
           {
-          ::OutputDebugString (_T("Break1 in L-CLK\n"));
           break;
           }
           MSG   msgd;
@@ -1819,7 +1817,6 @@ LRESULT CDlgBase::OnSystemTrayIcon(WPARAM wParam, LPARAM lParam)
         }
       }//isEnableLButtonDownDelay
 
-    ::OutputDebugString (_T("done in L-CLK\n"));
     // 发托盘左键单击消息
     DuiSystem::AddDuiActionTask(TRAY_ICON, MSG_TRAY_LBUTTONDOWN, 0, 0, NAME_TRAY_ICON, _T(""), this);
     s_dblclk_run = 0;
@@ -1859,7 +1856,8 @@ LRESULT CDlgBase::OnSystemTrayIcon(WPARAM wParam, LPARAM lParam)
 					int nScreenWidth= GetSystemMetrics(SM_CXSCREEN);
 					if(rc.right > nScreenWidth)
 					{
-						rc.OffsetRect(nScreenWidth - rc.right /*-10*/, 0);
+//						rc.OffsetRect(nScreenWidth - rc.right /*-10*/, 0);
+						rc.OffsetRect(-rc.Width() /*-10*/, 0);
 					}
 					if(rc.top <0)
 					{
@@ -1868,10 +1866,9 @@ LRESULT CDlgBase::OnSystemTrayIcon(WPARAM wParam, LPARAM lParam)
 					pDuiMenu->MoveWindow(rc);
 					pDuiMenu->ShowWindow(SW_SHOW);
 					pDuiMenu->SetAutoClose(TRUE);
-          ::OutputDebugString (_T("DlgBase::OnSystemTrayIcon Popup Traymenu End\n"));
 				}else
 				{
-	        DuiSystem::LogEvent(DUIV_LOG_LEVELERROR, _T("DlgBase::OnSystemTrayIcon:LoadXMLFile %s failed"),strXmlFile);
+					DuiSystem::LogEvent(DUIV_LOG_LEVELERROR, _T("DlgBase::OnSystemTrayIcon:LoadXMLFile %s failed"),strXmlFile);
 						
 					delete pDuiMenu;
 				}
