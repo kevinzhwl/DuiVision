@@ -722,5 +722,8 @@ void CMenuItem::DrawControl(CDC &dc, CRect rcUpdate)
 		}
 	}
 
-	dc.BitBlt(m_rc.left,m_rc.top, m_rc.Width(), m_rc.Height(), &m_memDC, m_enButtonState * nWidth, 0, SRCCOPY);
+
+	enumButtonState buttonState = m_enButtonState;
+	if(m_bIsSeparator) buttonState = enBSNormal;
+	dc.BitBlt(m_rc.left,m_rc.top, m_rc.Width(), m_rc.Height(), &m_memDC, buttonState * nWidth, 0, SRCCOPY);
 }
