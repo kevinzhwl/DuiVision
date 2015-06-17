@@ -2,6 +2,7 @@
 <menu title="TrayMenu" width="250" item-height="25" left="30"
 	frame-width="0" top-height="72" bottom-height="30"
 	bkmode="mid" width-lt="5" height-lt="70" width-rb="5" height-rb="30"
+    crrowhover="f5f5f5" crrowhovertext="646464"
 	img-popuparrow="skin:IDB_MENU_ARROW"
 	bkimg="skins\menu\360TrayMenu_218.png" >
 
@@ -14,7 +15,7 @@
 				font="zcmoney" title="5.5" cursorswap="1" />
 	
 	<menuitem name="restore_mainwnd" skin="" image="" title="恢复窗口" font="bold" action="show-window:dlg_main" />
-	<menuitem separator="1" skin="IDB_MENU_SEP" />
+	<menuitem separator="1" skin="IDB_MENU_SEP" response="0" />
 	<menuitem name="menu_main" menu="menu_main" />
 	<menuitem name="menuitem_checkbox" skin="IDB_CHECK_BOX" select="1" check="true" title="检查框菜单" />
 	<menuitem name="menuitem.radio" title="Radio子菜单" width="150" skin="IDB_MENU_ARROW"
@@ -34,7 +35,7 @@
 		</menuitem>
 	</menuitem>
 	<menuitem name="menuitem.runtest" title="执行进程" action="run:{platpath}DuiVisionDemo.2008d.exe|testcmd" />
-	<menuitem separator="1" skin="IDB_MENU_SEP" />
+	<menuitem separator="1" skin="IDB_MENU_SEP" response="0" />
 	<menuitem name="item_help" skin="IDB_MENU_HELP" img-count="3" title="帮助" action="link:http://www.blueantstudio.net" />
 	<menuitem name="traymenu_quit" image="" title="退出" action="close-window:dlg_main" />
 	<menuitem name="menuitem.sub1" title="子菜单2" width="150"
