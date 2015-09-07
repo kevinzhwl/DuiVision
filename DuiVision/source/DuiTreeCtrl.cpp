@@ -1,8 +1,9 @@
 #include "StdAfx.h"
 #include "DuiTreeCtrl.h"
 
-#define	SCROLL_V	1	// 滚动条控件ID
-#define	LISTBK_AREA	2	// 背景Area控件ID
+#define	SCROLL_V	1	// 垂直滚动条控件ID
+#define	SCROLL_H	2	// 水平滚动条控件ID
+#define	LISTBK_AREA	3	// 背景Area控件ID
 
 CDuiTreeCtrl::CDuiTreeCtrl(HWND hWnd, CDuiObject* pDuiObject)
 			: CDuiPanel(hWnd, pDuiObject)
@@ -20,7 +21,8 @@ CDuiTreeCtrl::CDuiTreeCtrl(HWND hWnd, CDuiObject* pDuiObject)
 	m_clrTextHover = Color(128, 0, 0);
 	m_clrTextDown = Color(0, 112, 235);
 	m_clrTitle = Color(255, 32, 32, 32);
-	m_clrSeperator = Color(200, 160, 160, 160);
+	m_clrSeperator = Color(0, 0, 0, 0);
+	m_clrRowHover = Color(0, 128, 128, 128);	// 鼠标移动到行显示的背景色,默认是透明色
 	m_nRowHeight = 50;
 	m_nLeftPos = 0;
 
@@ -34,6 +36,8 @@ CDuiTreeCtrl::CDuiTreeCtrl(HWND hWnd, CDuiObject* pDuiObject)
 	m_sizeToggle = CSize(0, 0);
 
 	m_nBkTransparent = 30;
+
+	m_bDblClk = true;
 
 	m_nHoverRow = 0;
 	m_nDownRow = -1;
@@ -110,7 +114,7 @@ BOOL CDuiTreeCtrl::Load(DuiXmlNode pXmlElem, BOOL bLoadSubControl)
 		int nWidth = -1;
 		if(!strWidth.IsEmpty())
 		{
-			nWidth = _wtoi(strWidth);
+			nWidth = _ttoi(strWidth);
 		}
 		InsertColumn(-1, strTitle, nWidth, clrText);
 	}
@@ -140,7 +144,7 @@ BOOL CDuiTreeCtrl::LoadNode(HTREEITEM hParentNode, DuiXmlNode pXmlElem)
 		int nCheck = -1;
 		if(!strCheck.IsEmpty())
 		{
-			nCheck = _wtoi(strCheck);
+			nCheck = _ttoi(strCheck);
 		}
 
 		BOOL bCollapse = (strCollapse == _T("1"));
@@ -165,7 +169,7 @@ BOOL CDuiTreeCtrl::LoadNode(HTREEITEM hParentNode, DuiXmlNode pXmlElem)
 		if(!strSkin.IsEmpty())
 		{
 			// 图片索引
-			nImageIndex = _wtoi(strSkin);
+			nImageIndex = _ttoi(strSkin);
 		}
 
 		// 右边图片,通过Skin读取
@@ -188,7 +192,7 @@ BOOL CDuiTreeCtrl::LoadNode(HTREEITEM hParentNode, DuiXmlNode pXmlElem)
 		if(!strRightSkin.IsEmpty())
 		{
 			// 图片索引
-			nRightImageIndex = _wtoi(strRightSkin);
+			nRightImageIndex = _ttoi(strRightSkin);
 		}
 
 		Color clrText = CDuiObject::StringToColor(strClrText);
@@ -254,9 +258,9 @@ BOOL CDuiTreeCtrl::LoadNode(HTREEITEM hParentNode, DuiXmlNode pXmlElem)
 			if(!strSkin.IsEmpty())
 			{
 				// 图片索引
-				nImageIndex = _wtoi(strSkin);
+				nImageIndex = _ttoi(strSkin);
 			}
-			int nImageCount = _wtoi(strImageCount);
+			int nImageCount = _ttoi(strImageCount);
 
 			BOOL bUseTitleFont = (strFontTitle == _T("1"));
 
@@ -657,7 +661,7 @@ BOOL CDuiTreeCtrl::AddSubItemControl(HTREEITEM hNode, int nItem, CControlBase* p
 	TreeItemInfo* pItemInfo = GetItemInfo(hNode, nItem);
 	if(pItemInfo == NULL)
 	{
-		SetSubItem(hNode, nItem, L"");
+		SetSubItem(hNode, nItem, _T(""));
 		pItemInfo = GetItemInfo(hNode, nItem);
 	}
 	if(pItemInfo == NULL)
@@ -772,7 +776,9 @@ BOOL CDuiTreeCtrl::DeleteNode(HTREEITEM hNode)
 		nIndex++;
 	}
 
-	UpdateControl(true);
+	// 重新计算所有行的位置
+	RefreshNodeRows();
+
 	return true;
 }
 
@@ -831,6 +837,18 @@ BOOL CDuiTreeCtrl::HaveChildNode(HTREEITEM hNode)
 	}
 
 	return FALSE;
+}
+
+// 获取父节点句柄
+HTREEITEM CDuiTreeCtrl::GetParentNode(HTREEITEM hNode)
+{
+	TreeNodeInfo* pNodeInfo = GetNodeInfo(hNode);
+	if(pNodeInfo)
+	{
+		return pNodeInfo->hParentNode;
+	}
+
+	return NULL;
 }
 
 // 获取第一个子节点句柄
@@ -892,6 +910,22 @@ HTREEITEM CDuiTreeCtrl::GetPrevSiblingNode(HTREEITEM hNode)
 	return NULL;
 }
 
+// 获取某个节点的子节点个数
+int CDuiTreeCtrl::GetChildNodeCount(HTREEITEM hNode)
+{
+	int nCount = 0;
+	for(size_t i = 0; i < m_vecRowInfo.size(); i++)
+	{
+		TreeNodeInfo &rowInfoTemp = m_vecRowInfo.at(i);
+		if(rowInfoTemp.hParentNode == hNode)
+		{
+			nCount++;
+		}
+	}
+
+	return nCount;
+}
+
 // 获取一个节点的层级
 int CDuiTreeCtrl::GetNodeLevel(HTREEITEM hNode)
 {
@@ -911,7 +945,7 @@ int CDuiTreeCtrl::GetNodeLevel(HTREEITEM hNode)
 }
 
 // 根据节点ID获取节点的句柄
-HTREEITEM CDuiTreeCtrl::GetNodeWithId(CString strId)
+HTREEITEM CDuiTreeCtrl::GetNodeById(CString strId)
 {
 	for(size_t i = 0; i < m_vecRowInfo.size(); i++)
 	{
@@ -1046,6 +1080,35 @@ void CDuiTreeCtrl::ToggleNode(HTREEITEM hNode)
 	}
 }
 
+// 切换节点的缩放状态
+void CDuiTreeCtrl::ExpandNode(HTREEITEM hNode, BOOL bExpand)
+{
+	// 展开父节点
+	HTREEITEM hParentNode = NULL;
+	HTREEITEM hTempNode = hNode;
+	while((hParentNode = GetParentNode(hTempNode)) != NULL)
+	{
+		TreeNodeInfo* pParentNodeInfo = GetNodeInfo(hParentNode);
+		if(pParentNodeInfo && pParentNodeInfo->bCollapse && bExpand)
+		{
+			pParentNodeInfo->bCollapse = FALSE;
+		}
+		hTempNode = hParentNode;
+	}
+
+	// 展开或收缩子节点
+	if(HaveChildNode(hNode))
+	{
+		TreeNodeInfo* pNodeInfo = GetNodeInfo(hNode);
+		if(pNodeInfo != NULL)
+		{
+			pNodeInfo->bCollapse = bExpand ? FALSE : TRUE;
+		}
+	}
+
+	RefreshNodeRows();
+}
+
 // 设置某一个节点的检查框状态
 void CDuiTreeCtrl::SetNodeCheck(HTREEITEM hNode, int nCheck)
 {
@@ -1075,6 +1138,22 @@ int CDuiTreeCtrl::GetNodeCheck(HTREEITEM hNode)
 // 清空树节点
 void CDuiTreeCtrl::ClearNodes()
 {
+	// 删除所有子控件
+	for(size_t i = 0; i < m_vecRowInfo.size(); i++)
+	{
+		TreeNodeInfo &rowInfo = m_vecRowInfo.at(i);
+		for(size_t j = 0; j < rowInfo.vecItemInfo.size(); j++)
+		{
+			TreeItemInfo &itemInfo = rowInfo.vecItemInfo.at(j);
+			vector<CControlBase*>::iterator it;
+			for(it=itemInfo.vecControl.begin(); it!=itemInfo.vecControl.end(); ++it)
+			{
+				CControlBase* pControl = *it;
+				RemoveControl(pControl);
+			}
+		}
+	}
+
 	m_vecRowInfo.clear();
 	m_pControScrollV->SetVisible(FALSE);
 	UpdateControl(true);
@@ -1185,9 +1264,49 @@ void CDuiTreeCtrl::RefreshNodeRows()
 
 	// 需要的总高度大于显示区高度才会显示滚动条
 	m_pControScrollV->SetVisible((nVisibleRows * m_nRowHeight) > m_rc.Height());
-	((CScrollV*)m_pControScrollV)->SetScrollMaxRange(nVisibleRows * m_nRowHeight);
+	((CDuiScrollVertical*)m_pControScrollV)->SetScrollMaxRange(nVisibleRows * m_nRowHeight);
 
 	UpdateControl(true);
+}
+
+// 将指定的节点滚动到可见范围
+BOOL CDuiTreeCtrl::EnsureVisible(HTREEITEM hNode, BOOL bPartialOK)
+{
+	// 如果节点未展开,则首先展开节点
+	ExpandNode(hNode, TRUE);
+
+	// 计算节点对应的行号
+	int nRow = GetNodeRow(hNode);
+	if(nRow == -1)
+	{
+		return FALSE;
+	}
+
+	int nViewRowCount = m_rc.Height() / m_nRowHeight;
+
+	// 如果指定的行已经处于可见范围则直接返回
+	if((nRow >= m_nFirstViewRow) && (nRow < (m_nFirstViewRow + nViewRowCount)))
+	{
+		return TRUE;
+	}
+
+	// 滚动到可见范围
+	CDuiScrollVertical* pScrollV = (CDuiScrollVertical*)m_pControScrollV;
+	if(nRow < m_nFirstViewRow)
+	{
+		pScrollV->SetScrollCurrentPos(nRow * m_nRowHeight);
+	}else
+	{
+		int nFirstRow = nRow - nViewRowCount + 2;
+		if(nFirstRow < 0)
+		{
+			nFirstRow = 0;
+		}
+		pScrollV->SetScrollCurrentPos(nFirstRow * m_nRowHeight);
+	}
+
+	UpdateControl(true);
+	return TRUE;
 }
 
 // 从XML设置Font-title属性
@@ -1372,6 +1491,7 @@ void CDuiTreeCtrl::ClearGridTooltip()
 	}
 }
 
+// 鼠标移动事件处理
 BOOL CDuiTreeCtrl::OnControlMouseMove(UINT nFlags, CPoint point)
 {
 	if(m_vecRowInfo.size() == 0)
@@ -1485,6 +1605,7 @@ BOOL CDuiTreeCtrl::OnControlMouseMove(UINT nFlags, CPoint point)
 	return false;
 }
 
+// 鼠标左键按下事件处理
 BOOL CDuiTreeCtrl::OnControlLButtonDown(UINT nFlags, CPoint point)
 {
 	if(m_vecRowInfo.size() == 0)
@@ -1532,6 +1653,7 @@ BOOL CDuiTreeCtrl::OnControlLButtonDown(UINT nFlags, CPoint point)
 	return false;
 }
 
+// 鼠标左键放开事件处理
 BOOL CDuiTreeCtrl::OnControlLButtonUp(UINT nFlags, CPoint point)
 {
 	if(m_vecRowInfo.size() == 0)
@@ -1547,7 +1669,7 @@ BOOL CDuiTreeCtrl::OnControlLButtonUp(UINT nFlags, CPoint point)
 			if(PtInRowCheck(point, rowInfo))	// 检查框状态改变
 			{
 				rowInfo.nCheck = ((rowInfo.nCheck == 1) ? 0 : 1);
-				SendMessage(MSG_BUTTON_UP, rowInfo.hNode, rowInfo.nCheck);
+				SendMessage(MSG_BUTTON_CHECK, rowInfo.hNode, rowInfo.nCheck);
 				UpdateControl(TRUE);
 
 				return true;
@@ -1570,7 +1692,7 @@ BOOL CDuiTreeCtrl::OnControlLButtonUp(UINT nFlags, CPoint point)
 			if(PtInRowCheck(point, rowInfo))	// 检查框状态改变
 			{
 				rowInfo.nCheck = ((rowInfo.nCheck == 1) ? 0 : 1);
-				SendMessage(MSG_BUTTON_UP, rowInfo.hNode, rowInfo.nCheck);
+				SendMessage(MSG_BUTTON_CHECK, rowInfo.hNode, rowInfo.nCheck);
 				UpdateControl(TRUE);
 
 				return true;
@@ -1588,6 +1710,31 @@ BOOL CDuiTreeCtrl::OnControlLButtonUp(UINT nFlags, CPoint point)
 	return false;
 }
 
+// 鼠标左键双击事件处理
+BOOL CDuiTreeCtrl::OnControlLButtonDblClk(UINT nFlags, CPoint point)
+{
+	if(m_vecRowInfo.size() == 0)
+	{
+		return false;
+	}
+
+	if(m_rc.PtInRect(point))
+	{
+		for(size_t i = 0; i < m_vecRowInfo.size(); i++)
+		{
+			TreeNodeInfo &rowInfo = m_vecRowInfo.at(i);
+			if(PtInRow(point, rowInfo) && !PtInRowCheck(point, rowInfo) && !PtInRowCollapse(point, rowInfo))
+			{
+				int nClickItem = PtInRowItem(point, rowInfo);
+				SendMessage(MSG_BUTTON_DBLCLK, rowInfo.hNode, nClickItem);
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 // 滚动事件处理
 BOOL CDuiTreeCtrl::OnControlScroll(BOOL bVertical, UINT nFlags, CPoint point)
 {
@@ -1597,8 +1744,8 @@ BOOL CDuiTreeCtrl::OnControlScroll(BOOL bVertical, UINT nFlags, CPoint point)
 	}
 
 	// 更新滚动条,并刷新界面
-	CScrollV* pScroll = (CScrollV*)m_pControScrollV;
-	if(pScroll->ScrollRow((nFlags == SB_LINEDOWN) ? 1 : -1))
+	CDuiScrollVertical* pScrollV = (CDuiScrollVertical*)m_pControScrollV;
+	if(pScrollV->ScrollRow((nFlags == SB_LINEDOWN) ? 1 : -1))
 	{
 		UpdateControl(true);
 	}
@@ -1642,11 +1789,11 @@ void CDuiTreeCtrl::DrawControl(CDC &dc, CRect rcUpdate)
 	// 5.计算出显示的top坐标进行内存dc的拷贝
 	int nWidth = m_rc.Width() - m_nScrollWidth;	// 减去滚动条的宽度
 	int nHeightAll = m_nVisibleRowCount*m_nRowHeight; // 总的虚拟高度 //m_rc.Height();
-	CScrollV* pScrollV = (CScrollV*)m_pControScrollV;
+	CDuiScrollVertical* pScrollV = (CDuiScrollVertical*)m_pControScrollV;
 	int nCurPos = pScrollV->GetScrollCurrentPos();	// 当前top位置
 	int nMaxRange = pScrollV->GetScrollMaxRange();
 
-	m_nVirtualTop = (nMaxRange > 0) ? nCurPos*(nHeightAll-m_rc.Height())/nMaxRange : 0;	// 当前滚动条位置对应的虚拟的top位置
+	m_nVirtualTop = (nMaxRange > 0) ? (int)((double)nCurPos*(nHeightAll-m_rc.Height())/nMaxRange) : 0;	// 当前滚动条位置对应的虚拟的top位置
 	if(m_nVirtualTop < 0)
 	{
 		m_nVirtualTop = 0;
@@ -1689,21 +1836,9 @@ void CDuiTreeCtrl::DrawControl(CDC &dc, CRect rcUpdate)
 
 		graphics.SetTextRenderingHint( TextRenderingHintClearTypeGridFit );
 
-		// 普通文字的对齐方式
-		StringFormat strFormat;
-		strFormat.SetAlignment(StringAlignmentNear);	// 左对齐
-		if(m_uVAlignment == VAlign_Top)
-		{
-			strFormat.SetLineAlignment(StringAlignmentNear);	// 上对其
-		}else
-		if(m_uVAlignment == VAlign_Middle)
-		{
-			strFormat.SetLineAlignment(StringAlignmentCenter);	// 中间对齐
-		}else
-		if(m_uVAlignment == VAlign_Bottom)
-		{
-			strFormat.SetLineAlignment(StringAlignmentFar);	// 下对齐
-		}
+		// 设置普通文字的水平和垂直对齐方式
+		DUI_STRING_ALIGN_DEFINE();
+
 		strFormat.SetTrimming(StringTrimmingEllipsisWord);	// 以单词为单位去尾,略去部分使用省略号
 		//strFormat.SetFormatFlags( StringFormatFlagsNoClip | StringFormatFlagsMeasureTrailingSpaces);
 		if(!m_bTextWrap)
@@ -1756,6 +1891,13 @@ void CDuiTreeCtrl::DrawControl(CDC &dc, CRect rcUpdate)
 							rowInfo.bCollapse ? nToggleIndex*m_sizeToggle.cx : (3+nToggleIndex)*m_sizeToggle.cx, 0, m_sizeToggle.cx, m_sizeToggle.cy, UnitPixel);
 						nXPos += m_sizeToggle.cx;
 					}
+				}
+
+				// 鼠标移动到行时候显示的背景颜色(如果设置为全0,则不显示行背景颜色)
+				if((m_nHoverRow == i) && (m_clrRowHover.GetValue() != Color(0, 0, 0, 0).GetValue()))
+				{
+					SolidBrush brush(m_clrRowHover);
+					graphics.FillRectangle(&brush, nXPos, nVI*m_nRowHeight, nWidth-nXPos, m_nRowHeight);
 				}
 
 				// 画检查框
@@ -1846,7 +1988,7 @@ void CDuiTreeCtrl::DrawControl(CDC &dc, CRect rcUpdate)
 					{
 						if((itemInfo.sizeImage.cy*2 > m_nRowHeight) || (m_uVAlignment == VAlign_Middle))
 						{
-							nImgY = (m_nRowHeight - rowInfo.sizeImage.cy) / 2 + 1;
+							nImgY = (m_nRowHeight - itemInfo.sizeImage.cy) / 2 + 1;
 						}
 						// 使用单元格指定的图片
 						graphics.DrawImage(itemInfo.pImage, Rect(nPosItemX+nItemImageX, nVI*m_nRowHeight + nImgY, itemInfo.sizeImage.cx, itemInfo.sizeImage.cy),
@@ -1885,17 +2027,21 @@ void CDuiTreeCtrl::DrawControl(CDC &dc, CRect rcUpdate)
 
 					// 画单元格标题或链接内容
 					SolidBrush solidBrushItem(m_clrText);
-					if(m_nHoverRow == i)
+					if((m_nHoverRow == i) && (m_clrTextHover.GetValue() != Color(0, 0, 0, 0).GetValue()))	// 设置了鼠标移动颜色,则使用
 					{
 						solidBrushItem.SetColor(m_clrTextHover);
 					}else
-					if(m_nDownRow == i)
+					if((m_nDownRow == i) && (m_clrTextDown.GetValue() != Color(0, 0, 0, 0).GetValue()))	// 设置了鼠标按下颜色,则使用
 					{
 						solidBrushItem.SetColor(m_clrTextDown);
 					}else
-					if(itemInfo.clrText.GetValue() != Color(0, 0, 0, 0).GetValue())
+					if(itemInfo.clrText.GetValue() != Color(0, 0, 0, 0).GetValue())	// 设置了单元格颜色,则使用
 					{
 						solidBrushItem.SetColor(itemInfo.clrText);
+					}else
+					if(rowInfo.clrText.GetValue() != Color(0, 0, 0, 0).GetValue())	// 设置了行颜色,则使用
+					{
+						solidBrushItem.SetColor(rowInfo.clrText);
 					}
 					CString strItemTitle = itemInfo.strTitle;
 					// 计算是否需要显示tip
@@ -1976,6 +2122,47 @@ void CDuiTreeCtrl::DrawControl(CDC &dc, CRect rcUpdate)
 					// 未指定图片,则画矩形
 					graphics.FillRectangle(&solidBrushS, 0, (nVI+1)*m_nRowHeight, nWidth-2, 1);
 				}*/
+			}
+
+			// 把不在显示范围内的单元格的控件都设置为不可见
+			nRowIndex = 0;
+			nFirstRowCount = 0;
+			for(int i = 0; i < (int)m_vecRowInfo.size(); i++)
+			{
+				TreeNodeInfo &rowInfo = m_vecRowInfo.at(i);
+				if(rowInfo.bHide)
+				{
+					continue;
+				}
+				BOOL bHideControl = TRUE;
+				if(nFirstRowCount < m_nFirstViewRow)
+				{
+					nFirstRowCount++;
+				}else
+				{
+					nRowIndex++;
+					if(nRowIndex < nViewRowCount)
+					{
+						bHideControl = FALSE;
+					}
+				}
+
+				// 显示区域之外的行的控件都隐藏
+				if(bHideControl)
+				{
+					for(size_t j = 0; j < rowInfo.vecItemInfo.size(); j++)
+					{
+						TreeItemInfo &itemInfo = rowInfo.vecItemInfo.at(j);
+						for(size_t k = 0; k < itemInfo.vecControl.size(); k++)
+						{
+							CControlBase* pControl = itemInfo.vecControl.at(k);
+							if(pControl)
+							{
+								pControl->SetVisible(FALSE);
+							}
+						}
+					}
+				}
 			}
 		}
 	}

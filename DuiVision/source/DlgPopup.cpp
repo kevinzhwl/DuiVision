@@ -29,6 +29,7 @@ CDlgPopup::CDlgPopup() : CDuiObject()
 	m_nFrameHRB = 0;
 	m_bInitFinish = false;
 	m_bAutoClose = true;
+	m_bTopMost = true;
 	m_bImageUseECM = false;
 
 	m_pControl = NULL;
@@ -77,14 +78,15 @@ BEGIN_MESSAGE_MAP(CDlgPopup, CWnd)
 	ON_WM_NCCALCSIZE()
 	ON_WM_NCHITTEST()
 	ON_WM_ERASEBKGND()
+	ON_WM_NCACTIVATE()
 	ON_MESSAGE(WM_MOUSELEAVE, OnMouseLeave)
 	ON_MESSAGE(WM_MOUSEHOVER, OnMouseHover)
 	ON_WM_KEYDOWN()
 	ON_WM_MOUSEMOVE()
 	ON_WM_MOUSEWHEEL()
 	ON_WM_LBUTTONDOWN()
-	ON_WM_NCACTIVATE()
 	ON_WM_LBUTTONUP()
+	ON_WM_LBUTTONDBLCLK()
 	ON_WM_CLOSE()
 	ON_WM_PAINT()
 	ON_WM_DESTROY()
@@ -103,7 +105,12 @@ BOOL CDlgPopup::Create(CWnd *pParent, CRect rc, UINT uMessageID, UINT nResourceI
 
 	SetBackBitmap(nResourceID);
 
-	if(CWnd::CreateEx(WS_EX_TOPMOST | WS_EX_TOOLWINDOW,sWindowClassName ,NULL,WS_POPUP, rc, pParent, 0, NULL))
+	DWORD dwStyle = WS_EX_TOOLWINDOW;
+	if(m_bTopMost)	// 窗口总在最前面
+	{
+		dwStyle |= WS_EX_TOPMOST;
+	}
+	if(!CWnd::CreateEx(dwStyle, sWindowClassName, NULL, WS_POPUP, rc, pParent, 0, NULL))
 	{
 		return	FALSE;
 	}
@@ -124,7 +131,12 @@ BOOL CDlgPopup::Create(CWnd *pParent, CRect rc, UINT uMessageID, CString strImag
 
 	SetBackBitmap(strImage);
 
-	if(CWnd::CreateEx(WS_EX_TOPMOST | WS_EX_TOOLWINDOW,sWindowClassName ,NULL,WS_POPUP, rc, pParent, 0, NULL))
+	DWORD dwStyle = WS_EX_TOOLWINDOW;
+	if(m_bTopMost)	// 窗口总在最前面
+	{
+		dwStyle |= WS_EX_TOPMOST;
+	}
+	if(!CWnd::CreateEx(dwStyle, sWindowClassName, NULL, WS_POPUP, rc, pParent, 0, NULL))
 	{
 		return	FALSE;
 	}
@@ -149,7 +161,12 @@ BOOL CDlgPopup::Create(CWnd *pParent, CRect rc, UINT uMessageID)
 		rc.bottom = rc.top + m_size.cy;
 	}
 
-	if(CWnd::CreateEx(WS_EX_TOPMOST | WS_EX_TOOLWINDOW,sWindowClassName ,NULL,WS_POPUP, rc, pParent, 0, NULL))
+	DWORD dwStyle = WS_EX_TOOLWINDOW;
+	if(m_bTopMost)	// 窗口总在最前面
+	{
+		dwStyle |= WS_EX_TOPMOST;
+	}
+	if(!CWnd::CreateEx(dwStyle, sWindowClassName, NULL, WS_POPUP, rc, pParent, 0, NULL))
 	{
 		return	FALSE;
 	}
@@ -287,7 +304,7 @@ void CDlgPopup::InitUI(CRect rcClient, DuiXmlNode pNode)
 					if(pControl->Load(pControlElem))
 					{
 						// 如果Load成功,则添加控件
-						if(pControl->IsClass(CArea::GetClassName()) || pControl->IsClass(CFrame::GetClassName()))
+						if(pControl->IsClass(CArea::GetClassName()) || pControl->IsClass(CDuiFrame::GetClassName()))
 						{
 							// Area和Frame不能响应鼠标,必须加到Area列表中
 							m_vecArea.push_back(pControl);
@@ -437,7 +454,7 @@ HRESULT CDlgPopup::OnAttributeBkImage(const CString& strValue, BOOL bLoading)
 		SetBackBitmap(strImgFile);
 	}else	// 加载图片资源
 	{
-		UINT nResourceID = _wtoi(strSkin);
+		UINT nResourceID = _ttoi(strSkin);
 		SetBackBitmap(nResourceID);
 	}
 
@@ -566,6 +583,7 @@ LRESULT CDlgPopup::OnMouseLeave(WPARAM wParam, LPARAM lParam)
 		if (m_pControl)
 		{
 			m_pControl->OnMouseMove(0, CPoint(-1, -1));
+			ResetControl();
 		}
 
 		m_pControl = NULL;
@@ -618,6 +636,7 @@ BOOL CDlgPopup::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
     return bResponse;
 }
 
+// 鼠标移动事件处理
 void CDlgPopup::OnMouseMove(UINT nFlags, CPoint point)
 {
 	if (!m_bTracking)
@@ -637,6 +656,7 @@ void CDlgPopup::OnMouseMove(UINT nFlags, CPoint point)
 		if(((m_pControl->PtInRect(point) && m_pControl->OnCheckMouseResponse(nFlags, point)) || m_bIsLButtonDown) && m_bTracking)
 		{			
 			m_pControl->OnMouseMove(nFlags, point);
+			ResetControl();
 			return;
 		}
 	}
@@ -678,12 +698,16 @@ void CDlgPopup::OnMouseMove(UINT nFlags, CPoint point)
 		{
 			DrawWindow();
 		}
+
+		ResetControl();
 	}
 }
 
+// 鼠标左键按下事件处理
 void CDlgPopup::OnLButtonDown(UINT nFlags, CPoint point)
 {
 	BOOL bIsSelect = false;
+	m_bIsLButtonDblClk = FALSE;
 
 	if(m_pFocusControl != m_pControl && m_pFocusControl != NULL)
 	{
@@ -714,6 +738,7 @@ void CDlgPopup::OnLButtonDown(UINT nFlags, CPoint point)
 	{
 		SetCapture();
 		m_bIsSetCapture = TRUE;
+		ResetControl();
 
 		return;
 	}
@@ -721,15 +746,18 @@ void CDlgPopup::OnLButtonDown(UINT nFlags, CPoint point)
 	// 调用自身的函数
 	if(OnLButtonDown(point))
 	{
-		DrawWindow();		
+		DrawWindow();	
 		return;
 	}
+
+	ResetControl();
 
 	//PostMessage(WM_NCLBUTTONDOWN,HTCAPTION,MAKELPARAM(point.x, point.y));
 
 	//CWnd::OnLButtonDown(nFlags, point);
 }
 
+// 鼠标左键放开事件处理
 void CDlgPopup::OnLButtonUp(UINT nFlags, CPoint point)
 {
 	if (m_bIsSetCapture)
@@ -767,9 +795,46 @@ void CDlgPopup::OnLButtonUp(UINT nFlags, CPoint point)
 		DrawWindow();
 	}
 
+	ResetControl();
+
 	CWnd::OnLButtonUp(nFlags, point);
 }
 
+// 鼠标左键双击事件处理
+void CDlgPopup::OnLButtonDblClk(UINT nFlags, CPoint point)
+{
+	m_bIsLButtonDblClk = TRUE;
+
+	if(m_pControl)
+	{
+		if(m_pControl->GetVisible() && m_pControl->GetRresponse())
+		{
+			CRect rc = m_pControl->GetRect();
+			m_pControl->OnLButtonDblClk(nFlags, point);				
+
+			if (!rc.PtInRect(point))
+			{
+				m_pControl = NULL;
+			}
+		}
+		else
+		{
+			m_pControl = NULL;
+		}
+	}
+
+	// 调用自身的函数
+	if(OnLButtonDblClk(point))
+	{
+		DrawWindow();
+	}
+
+	ResetControl();
+
+	CWnd::OnLButtonDblClk(nFlags, point);
+}
+
+// 键盘事件处理
 void CDlgPopup::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
 	// 当前控件是否能处理
@@ -1119,7 +1184,7 @@ void CDlgPopup::SetFocusControl(CControlBase* pFocusControl)
 // 获取当前焦点控件
 CControlBase* CDlgPopup::GetFocusControl()
 {
-	for (int i = m_vecControl.size()-1; i >= 0; i--)
+	/*for (int i = m_vecControl.size()-1; i >= 0; i--)
 	{
 		CControlBase* pControlBase = m_vecControl.at(i);
 		if (pControlBase && pControlBase->GetVisible() && !pControlBase->GetDisable() && (pControlBase == m_pFocusControl) && pControlBase->IsTabStop())
@@ -1137,7 +1202,8 @@ CControlBase* CDlgPopup::GetFocusControl()
 		}
 	}
 
-	return NULL;
+	return NULL;*/
+	return m_pFocusControl;
 }
 
 // 获取上一个可以获取焦点的子控件
@@ -1305,6 +1371,30 @@ CControlBase * CDlgPopup::SetControlDisable(CControlBase *pControlBase, BOOL bDi
 		UpdateHover();
 	}
 	return pControlBase;
+}
+
+// 重置控件
+void CDlgPopup::ResetControl()
+{
+	for (size_t i = 0; i < m_vecArea.size(); i++)
+	{
+		CControlBase * pControlBase = m_vecArea.at(i);
+		if (pControlBase)
+		{
+			pControlBase->SetUpdate(FALSE);//, m_clrBK);
+		}
+	}
+
+	for (size_t i = 0; i < m_vecControl.size(); i++)
+	{
+		CControlBase * pControlBase = m_vecControl.at(i);
+		if (pControlBase)
+		{
+			pControlBase->SetUpdate(FALSE);//, m_clrBK);			
+		}
+	}
+
+	InvalidateRect(NULL);
 }
 
 // 更新选中

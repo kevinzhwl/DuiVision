@@ -1,8 +1,9 @@
 #include "StdAfx.h"
 #include "DuiListCtrl.h"
 
-#define	SCROLL_V	1	// 滚动条控件ID
-#define	LISTBK_AREA	2	// 背景Area控件ID
+#define	SCROLL_V	1	// 垂直滚动条控件ID
+#define	SCROLL_H	2	// 水平滚动条控件ID
+#define	LISTBK_AREA	3	// 背景Area控件ID
 
 CDuiListCtrl::CDuiListCtrl(HWND hWnd, CDuiObject* pDuiObject)
 			: CDuiPanel(hWnd, pDuiObject)
@@ -20,7 +21,7 @@ CDuiListCtrl::CDuiListCtrl(HWND hWnd, CDuiObject* pDuiObject)
 	m_clrTextHover = Color(128, 0, 0);
 	m_clrTextDown = Color(0, 112, 235);
 	m_clrTitle = Color(255, 32, 32, 32);
-	m_clrSeperator = Color(200, 160, 160, 160);
+	m_clrSeperator = Color(0, 0, 0, 0);
 	m_clrRowHover = Color(0, 128, 128, 128);	// 鼠标移动到行显示的背景色,默认是透明色
 	m_nRowHeight = 50;
 
@@ -30,6 +31,8 @@ CDuiListCtrl::CDuiListCtrl(HWND hWnd, CDuiObject* pDuiObject)
 	m_sizeCheckBox = CSize(0, 0);
 
 	m_nBkTransparent = 30;
+
+	m_bDblClk = true;
 
 	m_nHoverRow = 0;
 	m_nDownRow = -1;
@@ -78,10 +81,6 @@ BOOL CDuiListCtrl::Load(DuiXmlNode pXmlElem, BOOL bLoadSubControl)
 		InitUI(m_rc, pXmlElem);
 	}
 
-	// 需要的总高度大于显示区高度才会显示滚动条
-	m_pControScrollV->SetVisible(((int)m_vecRowInfo.size() * m_nRowHeight) > m_rc.Height());
-	((CScrollV*)m_pControScrollV)->SetScrollMaxRange((int)m_vecRowInfo.size() * m_nRowHeight);
-
 	// 加载下层的row节点信息
 	for (DuiXmlNode pRowElem = pXmlElem.child(_T("row")); pRowElem; pRowElem=pRowElem.next_sibling(_T("row")))
 	{
@@ -104,7 +103,7 @@ BOOL CDuiListCtrl::Load(DuiXmlNode pXmlElem, BOOL bLoadSubControl)
 		int nCheck = -1;
 		if(!strCheck.IsEmpty())
 		{
-			nCheck = _wtoi(strCheck);
+			nCheck = _ttoi(strCheck);
 		}
 
 		// 左边图片,通过Skin读取
@@ -127,7 +126,7 @@ BOOL CDuiListCtrl::Load(DuiXmlNode pXmlElem, BOOL bLoadSubControl)
 		if(!strSkin.IsEmpty())
 		{
 			// 图片索引
-			nImageIndex = _wtoi(strSkin);
+			nImageIndex = _ttoi(strSkin);
 		}
 
 		// 右边图片,通过Skin读取
@@ -150,7 +149,7 @@ BOOL CDuiListCtrl::Load(DuiXmlNode pXmlElem, BOOL bLoadSubControl)
 		if(!strRightSkin.IsEmpty())
 		{
 			// 图片索引
-			nRightImageIndex = _wtoi(strRightSkin);
+			nRightImageIndex = _ttoi(strRightSkin);
 		}
 
 		Color clrText = CDuiObject::StringToColor(strClrText);
@@ -158,6 +157,9 @@ BOOL CDuiListCtrl::Load(DuiXmlNode pXmlElem, BOOL bLoadSubControl)
 		InsertItem(-1, strId, strTitle, strContent, strTime, nImageIndex, clrText, strImage, nRightImageIndex, strRightImage,
 			strLink1, strLinkAction1, strLink2, strLinkAction2, nCheck);
 	}
+
+	// 计算每一行的位置和滚动条
+	CalcItemsPos();
 
     return TRUE;
 }
@@ -317,7 +319,34 @@ void CDuiListCtrl::CalcItemsPos()
 
 	// 需要的总高度大于显示区高度才会显示滚动条
 	m_pControScrollV->SetVisible(((int)m_vecRowInfo.size() * m_nRowHeight) > m_rc.Height());
-	((CScrollV*)m_pControScrollV)->SetScrollMaxRange((int)m_vecRowInfo.size() * m_nRowHeight);
+	((CDuiScrollVertical*)m_pControScrollV)->SetScrollMaxRange((int)m_vecRowInfo.size() * m_nRowHeight);
+}
+
+// 将指定的行滚动到可见范围
+BOOL CDuiListCtrl::EnsureVisible(int nRow, BOOL bPartialOK)
+{
+	// 如果指定的行已经处于可见范围则直接返回
+	if((nRow >= m_nFirstViewRow) && (nRow <= m_nLastViewRow))
+	{
+		return TRUE;
+	}
+
+	CDuiScrollVertical* pScrollV = (CDuiScrollVertical*)m_pControScrollV;
+	if(nRow < m_nFirstViewRow)
+	{
+		pScrollV->SetScrollCurrentPos(nRow * m_nRowHeight);
+	}else
+	{
+		int nFirstRow = nRow - (m_rc.Height() / m_nRowHeight) + 2;
+		if(nFirstRow < 0)
+		{
+			nFirstRow = 0;
+		}
+		pScrollV->SetScrollCurrentPos(nFirstRow * m_nRowHeight);
+	}
+
+	UpdateControl(true);
+	return TRUE;
 }
 
 // 获取某一个列表项
@@ -434,7 +463,7 @@ void CDuiListCtrl::SetControlRect(CRect rc)
 
 	// 需要的总高度大于显示区高度才会显示滚动条
 	m_pControScrollV->SetVisible(((int)m_vecRowInfo.size() * m_nRowHeight) > m_rc.Height());
-	((CScrollV*)m_pControScrollV)->SetScrollMaxRange((int)m_vecRowInfo.size() * m_nRowHeight);
+	((CDuiScrollVertical*)m_pControScrollV)->SetScrollMaxRange((int)m_vecRowInfo.size() * m_nRowHeight);
 }
 
 // 判断指定的坐标位置是否在某一行中
@@ -512,6 +541,7 @@ void CDuiListCtrl::ClearRowTooltip()
 	}
 }
 
+// 鼠标移动事件处理
 BOOL CDuiListCtrl::OnControlMouseMove(UINT nFlags, CPoint point)
 {
 	if(m_vecRowInfo.size() == 0)
@@ -625,6 +655,7 @@ BOOL CDuiListCtrl::OnControlMouseMove(UINT nFlags, CPoint point)
 	return false;
 }
 
+// 鼠标左键按下事件处理
 BOOL CDuiListCtrl::OnControlLButtonDown(UINT nFlags, CPoint point)
 {
 	if(m_vecRowInfo.size() == 0)
@@ -672,6 +703,7 @@ BOOL CDuiListCtrl::OnControlLButtonDown(UINT nFlags, CPoint point)
 	return false;
 }
 
+// 鼠标左键放开事件处理
 BOOL CDuiListCtrl::OnControlLButtonUp(UINT nFlags, CPoint point)
 {
 	if(m_vecRowInfo.size() == 0)
@@ -687,7 +719,7 @@ BOOL CDuiListCtrl::OnControlLButtonUp(UINT nFlags, CPoint point)
 			if(PtInRowCheck(point, rowInfo))	// 检查框状态改变
 			{
 				rowInfo.nCheck = ((rowInfo.nCheck == 1) ? 0 : 1);
-				SendMessage(MSG_BUTTON_UP, m_nHoverRow, rowInfo.nCheck);
+				SendMessage(MSG_BUTTON_CHECK, m_nHoverRow, rowInfo.nCheck);
 				UpdateControl(TRUE);
 
 				return true;
@@ -703,9 +735,33 @@ BOOL CDuiListCtrl::OnControlLButtonUp(UINT nFlags, CPoint point)
 			if(PtInRowCheck(point, rowInfo))	// 检查框状态改变
 			{
 				rowInfo.nCheck = ((rowInfo.nCheck == 1) ? 0 : 1);
-				SendMessage(MSG_BUTTON_UP, m_nDownRow, rowInfo.nCheck);
+				SendMessage(MSG_BUTTON_CHECK, m_nDownRow, rowInfo.nCheck);
 				UpdateControl(TRUE);
 
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+// 鼠标左键双击事件处理
+BOOL CDuiListCtrl::OnControlLButtonDblClk(UINT nFlags, CPoint point)
+{
+	if(m_vecRowInfo.size() == 0)
+	{
+		return false;
+	}
+
+	if(m_rc.PtInRect(point))
+	{
+		for(size_t i = 0; i < m_vecRowInfo.size(); i++)
+		{
+			ListRowInfo &rowInfo = m_vecRowInfo.at(i);
+			if(PtInRow(point, rowInfo))
+			{
+				SendMessage(MSG_BUTTON_DBLCLK, i, -1);
 				return true;
 			}
 		}
@@ -723,7 +779,7 @@ BOOL CDuiListCtrl::OnControlScroll(BOOL bVertical, UINT nFlags, CPoint point)
 	}
 
 	// 更新滚动条,并刷新界面
-	CScrollV* pScroll = (CScrollV*)m_pControScrollV;
+	CDuiScrollVertical* pScroll = (CDuiScrollVertical*)m_pControScrollV;
 	if(pScroll->ScrollRow((nFlags == SB_LINEDOWN) ? 1 : -1))
 	{
 		UpdateControl(true);
@@ -771,11 +827,11 @@ void CDuiListCtrl::DrawControl(CDC &dc, CRect rcUpdate)
 	// 5.计算出显示的top坐标进行内存dc的拷贝
 	int nWidth = m_rc.Width() - m_nScrollWidth;	// 减去滚动条的宽度
 	int nHeightAll = (int)m_vecRowInfo.size()*m_nRowHeight; // 总的虚拟高度 //m_rc.Height();
-	CScrollV* pScrollV = (CScrollV*)m_pControScrollV;
+	CDuiScrollVertical* pScrollV = (CDuiScrollVertical*)m_pControScrollV;
 	int nCurPos = pScrollV->GetScrollCurrentPos();	// 当前top位置
 	int nMaxRange = pScrollV->GetScrollMaxRange();
 
-	m_nVirtualTop = (nMaxRange > 0) ? nCurPos*(nHeightAll-m_rc.Height())/nMaxRange : 0;	// 当前滚动条位置对应的虚拟的top位置
+	m_nVirtualTop = (nMaxRange > 0) ? (int)((double)nCurPos*(nHeightAll-m_rc.Height())/nMaxRange) : 0;	// 当前滚动条位置对应的虚拟的top位置
 	if(m_nVirtualTop < 0)
 	{
 		m_nVirtualTop = 0;
@@ -826,21 +882,9 @@ void CDuiListCtrl::DrawControl(CDC &dc, CRect rcUpdate)
 
 		graphics.SetTextRenderingHint( TextRenderingHintClearTypeGridFit );
 
-		// 普通文字的对齐方式
-		StringFormat strFormat;
-		strFormat.SetAlignment(StringAlignmentNear);	// 左对齐
-		if(m_uVAlignment == VAlign_Top)
-		{
-			strFormat.SetLineAlignment(StringAlignmentNear);	// 上对其
-		}else
-		if(m_uVAlignment == VAlign_Middle)
-		{
-			strFormat.SetLineAlignment(StringAlignmentCenter);	// 中间对齐
-		}else
-		if(m_uVAlignment == VAlign_Bottom)
-		{
-			strFormat.SetLineAlignment(StringAlignmentFar);	// 下对齐
-		}
+		// 设置普通文字的水平和垂直对齐方式
+		DUI_STRING_ALIGN_DEFINE();
+
 		strFormat.SetTrimming(StringTrimmingEllipsisWord);	// 以单词为单位去尾,略去部分使用省略号
 		//strFormat.SetFormatFlags( StringFormatFlagsNoClip | StringFormatFlagsMeasureTrailingSpaces);
 		if(!m_bTextWrap)
@@ -879,8 +923,8 @@ void CDuiListCtrl::DrawControl(CDC &dc, CRect rcUpdate)
 				int nXPos = 0;
 				int nVI = i - m_nFirstViewRow;
 
-				// 鼠标移动到行时候显示的背景颜色
-				if(m_nHoverRow == i)
+				// 鼠标移动到行时候显示的背景颜色(如果设置为全0,则不显示行背景颜色)
+				if((m_nHoverRow == i) && (m_clrRowHover.GetValue() != Color(0, 0, 0, 0).GetValue()))
 				{
 					SolidBrush brush(m_clrRowHover);
 					graphics.FillRectangle(&brush, 0, nVI*m_nRowHeight, nWidth, m_nRowHeight);
@@ -1094,8 +1138,9 @@ void CDuiListCtrl::DrawControl(CDC &dc, CRect rcUpdate)
 					//TextureBrush tileBrush(m_pImageSeperator, WrapModeTile);
 					//graphics.FillRectangle(&tileBrush, RectF(0, (nVI+1)*m_nRowHeight, nWidth-2, m_sizeSeperator.cy));
 				}else
+				if(m_clrSeperator.GetValue() != Color(0, 0, 0, 0).GetValue())
 				{
-					// 未指定图片,则画矩形
+					// 未指定图片,并且分隔线显色不是全0,则画矩形
 					graphics.FillRectangle(&solidBrushS, 0, (nVI+1)*m_nRowHeight, nWidth-2, 1);
 				}
 			}

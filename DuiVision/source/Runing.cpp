@@ -33,7 +33,7 @@ HRESULT CDuiAnimateImage::OnAttributeMaxIndex(const CString& strValue, BOOL bLoa
 {
 	if (strValue.IsEmpty() || (m_pImage == NULL)) return E_FAIL;
 
-	m_nMaxIndex = _wtoi(strValue);
+	m_nMaxIndex = _ttoi(strValue);
 	SetBitmapCount(m_nMaxIndex);
 
 	m_sizeImage.SetSize(m_pImage->GetWidth() / m_nImagePicCount, m_pImage->GetHeight());
@@ -113,8 +113,8 @@ void CDuiAnimateImage::DrawControl(CDC &dc, CRect rcUpdate)
 
 		Graphics graphics(m_memDC);
 		
-
-		CPoint point = GetOriginPoint(nWidth, nHeight, m_sizeImage.cx, m_sizeImage.cy, m_uAlignment, m_uVAlignment);
+		CPoint point = GetOriginPoint(nWidth, nHeight, m_sizeImage.cx, m_sizeImage.cy,
+						GetGDIAlignment(m_uAlignment), GetGDIVAlignment(m_uVAlignment));
 
 		for(int i = 0; i < m_nMaxIndex; i++)
 		{

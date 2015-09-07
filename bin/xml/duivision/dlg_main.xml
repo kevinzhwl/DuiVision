@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <dlg name="dlg_main" title="[APP_NAME]-任务栏名字22" width="800" height="550" translucent="255"
 	frame="skin:IDB_MAIN_FRAME" bkimg="" crbk="000000" appwin="1" resize="1"
-	width-lt="3" height-lt="119" width-rb="3" height-rb="30" >
+	width-lt="3" height-lt="119" width-rb="3" height-rb="30" topmost="0"
+	img-shadow="skins\360\window_shadow.png" shadow-wlt="5" shadow-hlt="3" shadow-wrb="5" shadow-hrb="7">
 
   <base>
 	<imgbtn name="button.close" pos="-45,0,-0,29" skin="IDB_BT_CLOSE" tip="关闭" action="hide-window" show="1"/>
@@ -20,7 +21,7 @@
 
 	<tabctrl name="tabctrl.main" image="skins\tab_image.png" img-count="3"
 			img-sep="skin:IDB_TAB_SEPERATOR--" img-hover="skin:IDB_TAB_HOVER"
-			font="bold" item-width="0" tab-height="0" animate="1"
+			font="bold" item-width="0" tab-height="0" tab-left-pading="0" animate="1"
 			pos="1,44,-1,-31">
 		<tab name="tab.home" title="首页" image="skins\icon\duivision.png" img-count="1" active="true" pos="0,75,-0,-0" show="true" >
 		

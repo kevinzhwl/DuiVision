@@ -8,7 +8,7 @@
 public:                                                 \
     static CControlBase* CheckAndNew(LPCTSTR lpszName, HWND hWnd, CDuiObject* pDuiObject)       \
     {                                                   \
-        if (wcscmp(GetClassName(), lpszName)  == 0)     \
+        if (_tcscmp(GetClassName(), lpszName)  == 0)     \
 		{\
 			CControlBase* pControl = new theclass(hWnd, pDuiObject);							\
 			return pControl;                        \
@@ -29,7 +29,7 @@ public:                                                 \
                                                         \
     virtual BOOL IsClass(LPCTSTR lpszName)               \
     {                                                   \
-        if(wcscmp(GetClassName(), lpszName)  == 0) return TRUE;  \
+        if(_tcscmp(GetClassName(), lpszName)  == 0) return TRUE;  \
 		return __super::IsClass(lpszName);				\
     }                                                   \
 														\
@@ -286,7 +286,7 @@ public:                                                             \
 			}	\
 		}else	\
 		{	\
-			UINT nResourceID = _wtoi(strSkin);	\
+			UINT nResourceID = _ttoi(strSkin);	\
 			if(!Set##imgName##Bitmap(nResourceID, TEXT("PNG")))	\
 			{	\
 				if(!Set##imgName##Bitmap(nResourceID, TEXT("BMP")))	\
@@ -361,6 +361,7 @@ public:
 	
 	virtual HRESULT SetAttribute(CString strAttribName, CString strValue, BOOL bLoading);
 	virtual BOOL Load(DuiXmlNode pXmlElem, BOOL bLoadSubControl = TRUE);
+	virtual BOOL OnInit();
 
 	virtual void SetRect(CRect rc) { m_rc = rc;};
 	virtual CRect GetRect() { return m_rc;};
@@ -368,7 +369,7 @@ public:
 	static void ParseDuiString(CString& strString);
 	static ULONG HexStringToULong(LPCTSTR lpszValue, int nSize = -1);
     static Color HexStringToColor(LPCTSTR lpszValue);
-	static Color StringToColor(LPCTSTR lpszValue, Color clrDefault = Color(0, 0, 0));
+	static Color StringToColor(LPCTSTR lpszValue, Color clrDefault = Color(0, 0, 0, 0));
 	static COLORREF HexStringToRGBColor(LPCTSTR lpszValue);
 	static void ParseKeyCode(LPCTSTR lpszValue, UINT& nChar, UINT& nFlag);
 

@@ -1,7 +1,8 @@
 #include "StdAfx.h"
 #include "Panel.h"
 
-#define	SCROLL_V	1	// 滚动条控件ID
+#define	SCROLL_V	1	// 垂直滚动条控件ID
+#define	SCROLL_H	2	// 水平滚动条控件ID
 
 CDuiPanel::CDuiPanel(HWND hWnd, CDuiObject* pDuiObject)
 			: CControlBaseFont(hWnd, pDuiObject)
@@ -9,22 +10,31 @@ CDuiPanel::CDuiPanel(HWND hWnd, CDuiObject* pDuiObject)
 	m_bEnableScroll = TRUE;
 	m_nScrollWidth = 8;
 
+	// 垂直滚动条
 	CRect rcScroll = CRect(0,0,0,0);
-	rcScroll.top;
 	rcScroll.left = rcScroll.right - m_nScrollWidth;
 
- 	CControlBase * pControlBase = NULL;
- 	pControlBase = new CScrollV(hWnd, this, SCROLL_V, rcScroll);
- 	m_vecControl.push_back(pControlBase);
-	m_pControScrollV = (CControlBaseFont*)pControlBase;
+ 	m_pControScrollV = new CDuiScrollVertical(hWnd, this, SCROLL_V, rcScroll);
+ 	m_vecControl.push_back(m_pControScrollV);
+
+	// 水平滚动条
+	rcScroll = CRect(0,0,0,0);
+	rcScroll.top = rcScroll.bottom - m_nScrollWidth;
+
+ 	m_pControScrollH = new CDuiScrollHorizontal(hWnd, this, SCROLL_H, rcScroll);
+ 	m_vecControl.push_back(m_pControScrollH);
 
 	m_strXmlFile = _T("");
 	m_nVirtualHeight = 0;
+	m_nVirtualWidth = 0;
 	m_nVirtualTop = 0;
+	m_nVirtualLeft = 0;
 
 	m_hPluginHandle = NULL;
 	m_strPluginFile = _T("");
 	m_pDuiPluginObject = NULL;
+
+	m_bDblClk = true;
 
 	m_bInit = false;
 }
@@ -57,7 +67,7 @@ CControlBase* CDuiPanel::_CreateControlByName(LPCTSTR lpszName)
 
 	// 查找父对话框的窗口句柄,通过父对话框句柄创建控件
 	CDuiObject* pParentObj = GetParent();
-	while((pParentObj != NULL) && (!pParentObj->IsClass(_T("dlg"))))
+	while((pParentObj != NULL) && (!pParentObj->IsClass(_T("dlg"))) && (!pParentObj->IsClass(_T("popup"))))
 	{
 		pParentObj = ((CControlBase*)pParentObj)->GetParent();
 	}
@@ -65,6 +75,10 @@ CControlBase* CDuiPanel::_CreateControlByName(LPCTSTR lpszName)
 	if((pParentObj != NULL) && pParentObj->IsClass(_T("dlg")))
 	{
 		return DuiSystem::CreateControlByName(lpszName, ((CDlgBase*)pParentObj)->GetSafeHwnd(), this);
+	}else
+	if((pParentObj != NULL) && pParentObj->IsClass(_T("popup")))
+	{
+		return DuiSystem::CreateControlByName(lpszName, ((CDlgPopup*)pParentObj)->GetSafeHwnd(), this);
 	}
 
 	return NULL;
@@ -95,7 +109,7 @@ BOOL CDuiPanel::LoadXmlFile(CString strFileName)
 
 	if(!DuiSystem::Instance()->LoadXmlFile(xmlDoc, strFileName))
 	{
-		DuiSystem::LogEvent(DUIV_LOG_LEVELERROR, L"CDuiPanel::LoadXmlFile %s failed", strFileName);
+		DuiSystem::LogEvent(LOG_LEVEL_ERROR, _T("CDuiPanel::LoadXmlFile %s failed"), strFileName);
 		return FALSE;
 	}
 
@@ -103,22 +117,22 @@ BOOL CDuiPanel::LoadXmlFile(CString strFileName)
 	pDivElem = xmlDoc.child(_T("div"));
 	if(pDivElem == NULL)
 	{
-		DuiSystem::LogEvent(DUIV_LOG_LEVELERROR, L"CDuiPanel::LoadXmlFile %s failed, not found div node", strFileName);
+		DuiSystem::LogEvent(LOG_LEVEL_ERROR, _T("CDuiPanel::LoadXmlFile %s failed, not found div node"), strFileName);
 		return FALSE;
 	}
 
 	// 加载div节点属性
 	if(!Load(pDivElem))
 	{
-		DuiSystem::LogEvent(DUIV_LOG_LEVELERROR, L"CDuiPanel::LoadXmlFile %s failed, load div node fail", strFileName);
+		DuiSystem::LogEvent(LOG_LEVEL_ERROR, _T("CDuiPanel::LoadXmlFile %s failed, load div node fail"), strFileName);
 		return FALSE;
 	}
 
 	return TRUE;
 }
 
-// 从XML设置图片信息属性
-HRESULT CDuiPanel::OnAttributeImageScroll(const CString& strValue, BOOL bLoading)
+// 从XML设置垂直滚动条图片信息属性
+HRESULT CDuiPanel::OnAttributeImageScrollV(const CString& strValue, BOOL bLoading)
 {
 	if (strValue.IsEmpty()) return E_FAIL;
 
@@ -146,10 +160,52 @@ HRESULT CDuiPanel::OnAttributeImageScroll(const CString& strValue, BOOL bLoading
 		}
 	}else	// 加载图片资源
 	{
-		UINT nResourceID = _wtoi(strSkin);
+		UINT nResourceID = _ttoi(strSkin);
 		if(!m_pControScrollV->SetBitmap(nResourceID, TEXT("PNG")))
 		{
 			if(!m_pControScrollV->SetBitmap(nResourceID, TEXT("BMP")))
+			{
+				return E_FAIL;
+			}
+		}
+	}
+
+	return bLoading?S_FALSE:S_OK;
+}
+
+// 从XML设置水平滚动条图片信息属性
+HRESULT CDuiPanel::OnAttributeImageScrollH(const CString& strValue, BOOL bLoading)
+{
+	if (strValue.IsEmpty()) return E_FAIL;
+
+	// 通过Skin读取
+	CString strSkin = _T("");
+	if(strValue.Find(_T("skin:")) == 0)
+	{
+		strSkin = DuiSystem::Instance()->GetSkin(strValue);
+		if (strSkin.IsEmpty()) return E_FAIL;
+	}else
+	{
+		strSkin = strValue;
+	}
+
+	if(strSkin.Find(_T(".")) != -1)	// 加载图片文件
+	{
+		CString strImgFile = strSkin;
+		if(strSkin.Find(_T(":")) != -1)
+		{
+			strImgFile = strSkin;
+		}
+		if(!m_pControScrollH->SetBitmap(strImgFile))
+		{
+			return E_FAIL;
+		}
+	}else	// 加载图片资源
+	{
+		UINT nResourceID = _ttoi(strSkin);
+		if(!m_pControScrollH->SetBitmap(nResourceID, TEXT("PNG")))
+		{
+			if(!m_pControScrollH->SetBitmap(nResourceID, TEXT("BMP")))
 			{
 				return E_FAIL;
 			}
@@ -189,7 +245,8 @@ HRESULT CDuiPanel::OnAttributePlugin(const CString& strValue, BOOL bLoading)
 	HINSTANCE hPluginHandle = NULL;
 	LPVOID pPluginObj = NULL;
 
-	if(DuiSystem::Instance()->LoadPluginFile(strValue, CEncodingUtil::AnsiToUnicode(IID_IDuiPluginPanel), hPluginHandle, pPluginObj))
+	//if(DuiSystem::Instance()->LoadPluginFile(strValue, CEncodingUtil::AnsiToUnicode(IID_IDuiPluginPanel), hPluginHandle, pPluginObj))
+	if(DuiSystem::Instance()->LoadPluginFile(strValue, IID_IDuiPluginPanel, hPluginHandle, pPluginObj))
 	{
 		m_strPluginFile = strValue;
 		m_hPluginHandle = hPluginHandle;
@@ -203,7 +260,8 @@ HRESULT CDuiPanel::OnAttributePlugin(const CString& strValue, BOOL bLoading)
 			nIDTemplate = pParentDlg->GetIDTemplate();
 			hWnd = pParentDlg->GetSafeHwnd();
 		}
-		m_pDuiPluginObject->OnInit(nIDTemplate, hWnd, CEncodingUtil::UnicodeToAnsi(GetName()), m_rc);
+		//m_pDuiPluginObject->OnInit(nIDTemplate, hWnd, CEncodingUtil::UnicodeToAnsi(GetName()), m_rc);
+		m_pDuiPluginObject->OnInit(nIDTemplate, hWnd, GetName(), m_rc);
 	}
 
 	return bLoading?S_FALSE:S_OK;
@@ -221,6 +279,7 @@ void CDuiPanel::InitUI(CRect rcClient, DuiXmlNode pNode)
 	if(pNode)
 	{
 		m_nVirtualHeight = 0;
+		m_nVirtualWidth = 0;
 		for (DuiXmlNode pControlElem = pNode.first_child(); pControlElem; pControlElem=pControlElem.next_sibling())
 		{
 			if(pControlElem != NULL)
@@ -230,7 +289,7 @@ void CDuiPanel::InitUI(CRect rcClient, DuiXmlNode pNode)
 				if(pControl)
 				{
 					pControl->Load(pControlElem);
-					if(pControl->IsClass(CArea::GetClassName()) || pControl->IsClass(CFrame::GetClassName()))
+					if(pControl->IsClass(CArea::GetClassName()) || pControl->IsClass(CDuiFrame::GetClassName()))
 					{
 						// Area和Frame不能响应鼠标,必须加到Area列表中
 						m_vecArea.push_back(pControl);
@@ -244,41 +303,27 @@ void CDuiPanel::InitUI(CRect rcClient, DuiXmlNode pNode)
 					{
 						m_nVirtualHeight = rcCtrl.bottom - m_rc.top;
 					}
+					if(rcCtrl.right > m_nVirtualWidth)
+					{
+						m_nVirtualWidth = rcCtrl.right - m_rc.left;
+					}
 				}
 			}
 		}
 
-		// 需要的总高度大于显示区高度才会显示滚动条
+		// 需要的总高度大于显示区高度才会显示垂直滚动条
 		m_pControScrollV->SetVisible(m_nVirtualHeight > m_rc.Height());
-		((CScrollV*)m_pControScrollV)->SetScrollMaxRange(m_nVirtualHeight);
+		((CDuiScrollVertical*)m_pControScrollV)->SetScrollMaxRange(m_nVirtualHeight);
+
+		// 需要的总宽度大于显示区宽度才会显示垂直滚动条
+		m_pControScrollH->SetVisible(m_nVirtualWidth > m_rc.Width());
+		((CDuiScrollHorizontal*)m_pControScrollH)->SetScrollMaxRange(m_nVirtualWidth);
 	}
 
 	m_bInit = true;
 }
 
-// 计算虚拟高度
-void CDuiPanel::CalcVirtualHeight()
-{
-	CRect rcTemp;
-	for (size_t i = 0; i < m_vecControl.size(); i++)
-	{
-		CControlBase * pControlBase = m_vecControl.at(i);
-		if (pControlBase)
-		{
-			rcTemp = pControlBase->GetRect();
-			if(rcTemp.bottom > m_nVirtualHeight)
-			{
-				// 刷新Panel的虚拟高度
-				m_nVirtualHeight = rcTemp.bottom - m_rc.top;
-			}
-		}
-	}
-
-	// 需要的总高度大于显示区高度才会显示滚动条
-	m_pControScrollV->SetVisible(m_nVirtualHeight > m_rc.Height());
-	((CScrollV*)m_pControScrollV)->SetScrollMaxRange(m_nVirtualHeight);
-}
-
+// 设置控件的位置
 void CDuiPanel::SetControlRect(CRect rc)
 {
 	m_rc = rc;
@@ -300,12 +345,22 @@ void CDuiPanel::SetControlRect(CRect rc)
 				rcTemp = m_rc;
 				rcTemp.left = rcTemp.right - m_nScrollWidth;
 			}else
+			if(SCROLL_H == uControlID)
+			{
+				rcTemp = m_rc;
+				rcTemp.top = rcTemp.bottom - m_nScrollWidth;
+			}else
 			{
 				rcTemp = pControlBase->GetRect();
 				if(rcTemp.bottom > m_nVirtualHeight)
 				{
 					// 刷新Panel的虚拟高度
 					m_nVirtualHeight = rcTemp.bottom - m_rc.top;
+				}
+				if(rcTemp.right > m_nVirtualWidth)
+				{
+					// 刷新Panel的虚拟宽度
+					m_nVirtualWidth = rcTemp.right - m_rc.left;
 				}
 				continue;
 			}
@@ -315,7 +370,11 @@ void CDuiPanel::SetControlRect(CRect rc)
 
 	// 需要的总高度大于显示区高度才会显示滚动条
 	m_pControScrollV->SetVisible(m_nVirtualHeight > m_rc.Height());
-	((CScrollV*)m_pControScrollV)->SetScrollMaxRange(m_nVirtualHeight);
+	((CDuiScrollVertical*)m_pControScrollV)->SetScrollMaxRange(m_nVirtualHeight);
+
+	// 需要的总宽度大于显示区宽度才会显示垂直滚动条
+	m_pControScrollH->SetVisible(m_nVirtualWidth > m_rc.Width());
+	((CDuiScrollHorizontal*)m_pControScrollH)->SetScrollMaxRange(m_nVirtualWidth);
 }
 
 // 重载设置控件可见性的函数，需要调用子控件的函数
@@ -381,6 +440,7 @@ BOOL CDuiPanel::SetControlFocus(BOOL bFocus)
 	return __super::SetControlFocus(bFocus);
 }
 
+// 画控件
 void CDuiPanel::DrawControl(CDC &dc, CRect rcUpdate)
 {
 	if(m_pDuiPluginObject)
@@ -393,34 +453,48 @@ void CDuiPanel::DrawControl(CDC &dc, CRect rcUpdate)
 BOOL CDuiPanel::DrawSubControls(CDC &dc, CRect rcUpdate)
 {
 	// 如果不需要滚动条,则直接使用父控件的画图方法
-	if(!m_bEnableScroll || (m_nVirtualHeight < m_rc.Height()))
+	if(!m_bEnableScroll || ((m_nVirtualHeight <= m_rc.Height()) && (m_nVirtualWidth <= m_rc.Width())))
 	{
 		return __super::DrawSubControls(dc, rcUpdate);
 	}
 
+	BOOL bShowScrollV = m_nVirtualHeight > m_rc.Height();
+	BOOL bShowScrollH = m_nVirtualWidth > m_rc.Width();
+
 	// 计算显示位置
-	CScrollV* pScrollV = (CScrollV*)m_pControScrollV;
-	int nCurPos = pScrollV->GetScrollCurrentPos();	// 当前top位置
-	int nMaxRange = pScrollV->GetScrollMaxRange();
-	int nVirtualTop = (nMaxRange > 0) ? nCurPos*(m_nVirtualHeight-m_rc.Height())/nMaxRange : 0;	// 当前显示的是虚拟图片中什么位置开始的图片
+	CDuiScrollVertical* pScrollV = (CDuiScrollVertical*)m_pControScrollV;
+	int nCurPosV = pScrollV->GetScrollCurrentPos();	// 当前top位置
+	int nMaxRangeV = pScrollV->GetScrollMaxRange();
+	int nVirtualTop = (nMaxRangeV > 0) ? nCurPosV*(m_nVirtualHeight-m_rc.Height())/nMaxRangeV : 0;	// 当前显示的是虚拟图片中什么位置开始的图片
+
+	CDuiScrollHorizontal* pScrollH = (CDuiScrollHorizontal*)m_pControScrollH;
+	int nCurPosH = pScrollH->GetScrollCurrentPos();	// 当前top位置
+	int nMaxRangeH = pScrollH->GetScrollMaxRange();
+	int nVirtualLeft = (nMaxRangeH > 0) ? nCurPosH*(m_nVirtualWidth-m_rc.Width())/nMaxRangeH : 0;	// 当前显示的是虚拟图片中什么位置开始的图片
 
 	// 根据滚动条位置画子控件
 	// 初始化虚拟显示dc,并复制背景到虚拟显示dc
 	CBitmap	virtualBitmap;
 	CDC virtualDC;
 	virtualDC.CreateCompatibleDC(&dc);
-	virtualBitmap.CreateCompatibleBitmap(&dc, m_rc.right-m_nScrollWidth, m_rc.top + m_nVirtualHeight);
+	virtualBitmap.CreateCompatibleBitmap(&dc,
+				bShowScrollH ? (m_rc.left + m_nVirtualWidth) : (m_rc.right - (bShowScrollV ? m_nScrollWidth : 0)),
+				bShowScrollV ? (m_rc.top + m_nVirtualHeight) : (m_rc.bottom - (bShowScrollH ? m_nScrollWidth : 0)) );
 	CBitmap* pOldVirtualBitmap = virtualDC.SelectObject(&virtualBitmap);
-	virtualDC.BitBlt(m_rc.left, m_rc.top+nVirtualTop, m_rc.Width()-m_nScrollWidth, m_rc.Height(), &dc, m_rc.left, m_rc.top, SRCCOPY);	// 背景复制到虚拟显示dc
+	virtualDC.BitBlt(m_rc.left+nVirtualLeft, m_rc.top+nVirtualTop,
+				m_rc.Width()-(bShowScrollV ? m_nScrollWidth : 0),
+				m_rc.Height()-(bShowScrollH ? m_nScrollWidth : 0),
+				&dc, m_rc.left, m_rc.top, SRCCOPY);	// 背景复制到虚拟显示dc
 
 	// 更新区域按照显示区域调整
-	rcUpdate.OffsetRect(0, nVirtualTop);
+	rcUpdate.OffsetRect(nVirtualLeft, nVirtualTop);
 
 	// 画子控件到虚拟dc
 	for (size_t i = 0; i < m_vecControl.size(); i++)
 	{
 		CControlBase * pControlBase = m_vecControl.at(i);
-		if (pControlBase && pControlBase->GetVisible() && (pControlBase != m_pControScrollV))
+		if (pControlBase && pControlBase->GetVisible()
+			&& (pControlBase != m_pControScrollV) && (pControlBase != m_pControScrollH))
 		{
 			// 如果顶部位置发生了变化,需要重画所有子控件,但会造成速度很慢
 			if(m_nVirtualTop != nVirtualTop)
@@ -431,12 +505,17 @@ BOOL CDuiPanel::DrawSubControls(CDC &dc, CRect rcUpdate)
 		}
 	}
 
-	m_pControScrollV->Draw(dc, rcUpdate);
+	// 画滚动条,滚动条整个区域都需要更新
+	m_pControScrollV->Draw(dc, m_pControScrollV->GetRect());
+	m_pControScrollH->Draw(dc, m_pControScrollH->GetRect());
 
 	m_nVirtualTop = nVirtualTop;
+	m_nVirtualLeft = nVirtualLeft;
 
-	// 虚拟显示dc复制到dc
-	dc.BitBlt(m_rc.left, m_rc.top, m_rc.Width()-m_nScrollWidth, m_rc.Height(), &virtualDC, m_rc.left, m_rc.top + nVirtualTop, SRCCOPY);
+	// 虚拟显示dc复制到dc(滚动条部分不用复制)
+	dc.BitBlt(m_rc.left, m_rc.top, m_rc.Width()-(bShowScrollV ? m_nScrollWidth : 0),
+			m_rc.Height()-(bShowScrollH ? m_nScrollWidth : 0),
+			&virtualDC, m_rc.left + nVirtualLeft, m_rc.top + nVirtualTop, SRCCOPY);
 
 	// 释放虚拟显示dc
 	virtualDC.SelectObject(pOldVirtualBitmap);
@@ -444,6 +523,17 @@ BOOL CDuiPanel::DrawSubControls(CDC &dc, CRect rcUpdate)
 	virtualBitmap.DeleteObject();
 
 	return TRUE;
+}
+
+// 设置控件刷新标识
+void CDuiPanel::SetUpdate(BOOL bUpdate, COLORREF clr/* = 0*/)
+{
+	__super::SetUpdate(bUpdate, clr);
+
+	if(m_pDuiPluginObject)
+	{
+		m_pDuiPluginObject->SetUpdate(bUpdate, clr);
+	}
 }
 
 // 鼠标坐标变换
@@ -454,15 +544,20 @@ BOOL CDuiPanel::OnMousePointChange(CPoint& point)
 		return m_pDuiPluginObject->OnMousePointChange(point);
 	}
 
-	if(m_bEnableScroll && (m_nVirtualHeight > m_rc.Height()))
+	if(m_bEnableScroll && ((m_nVirtualHeight > m_rc.Height()) || (m_nVirtualWidth > m_rc.Width())))
 	{
 		// 计算显示位置
-		CScrollV* pScrollV = (CScrollV*)m_pControScrollV;
-		int nCurPos = pScrollV->GetScrollCurrentPos();	// 当前top位置
-		int nMaxRange = pScrollV->GetScrollMaxRange();
-		int nVirtualTop = (nMaxRange > 0) ? nCurPos*(m_nVirtualHeight-m_rc.Height())/nMaxRange : 0;	// 当前显示的是虚拟图片中什么位置开始的图片
+		CDuiScrollVertical* pScrollV = (CDuiScrollVertical*)m_pControScrollV;
+		int nCurPosV = pScrollV->GetScrollCurrentPos();	// 当前top位置
+		int nMaxRangeV = pScrollV->GetScrollMaxRange();
+		int nVirtualTop = (nMaxRangeV > 0) ? nCurPosV*(m_nVirtualHeight-m_rc.Height())/nMaxRangeV : 0;	// 当前显示的是虚拟图片中什么位置开始的图片
 
-		point.Offset(0, nVirtualTop);
+		CDuiScrollHorizontal* pScrollH = (CDuiScrollHorizontal*)m_pControScrollH;
+		int nCurPosH = pScrollH->GetScrollCurrentPos();	// 当前top位置
+		int nMaxRangeH = pScrollH->GetScrollMaxRange();
+		int nVirtualLeft = (nMaxRangeH > 0) ? nCurPosH*(m_nVirtualWidth-m_rc.Width())/nMaxRangeH : 0;	// 当前显示的是虚拟图片中什么位置开始的图片
+
+		point.Offset(nVirtualLeft, nVirtualTop);
 
 		return TRUE;
 	}
@@ -500,12 +595,22 @@ BOOL CDuiPanel::OnControlLButtonDown(UINT nFlags, CPoint point)
 	return FALSE;
 }
 
-// 鼠标松开事件处理
+// 鼠标左键放开事件处理
 BOOL CDuiPanel::OnControlLButtonUp(UINT nFlags, CPoint point)
 {
 	if(m_pDuiPluginObject)
 	{
 		return m_pDuiPluginObject->OnLButtonUp(nFlags, point);
+	}
+	return FALSE;
+}
+
+// 鼠标左键双击事件处理
+BOOL CDuiPanel::OnControlLButtonDblClk(UINT nFlags, CPoint point)
+{
+	if(m_pDuiPluginObject)
+	{
+		return m_pDuiPluginObject->OnLButtonDblClk(nFlags, point);
 	}
 	return FALSE;
 }
@@ -525,7 +630,7 @@ BOOL CDuiPanel::OnControlTimer()
 {
 	if(m_pDuiPluginObject)
 	{
-		return m_pDuiPluginObject->OnTimer(0, "");
+		return m_pDuiPluginObject->OnTimer(0, _T(""));
 	}
 	return __super::OnControlTimer();
 }
@@ -544,12 +649,12 @@ BOOL CDuiPanel::OnControlScroll(BOOL bVertical, UINT nFlags, CPoint point)
 	}
 
 	// 更新滚动条,并刷新界面
-	CScrollV* pScroll = (CScrollV*)m_pControScrollV;
-	if(pScroll->ScrollRow((nFlags == SB_LINEDOWN) ? 1 : -1))
+	CDuiScrollVertical* pScrollV = (CDuiScrollVertical*)m_pControScrollV;
+	if(pScrollV->ScrollRow((nFlags == SB_LINEDOWN) ? 1 : -1))
 	{
 		UpdateControl(true);
 		// 刷新滚动条
-		pScroll->UpdateControl(true);
+		pScrollV->UpdateControl(true);
 	}
 
 	return true;
@@ -558,8 +663,7 @@ BOOL CDuiPanel::OnControlScroll(BOOL bVertical, UINT nFlags, CPoint point)
 // 消息响应
 LRESULT CDuiPanel::OnBaseMessage(UINT uID, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	OnMessage(uID, uMsg, wParam, lParam);
-	return 0L; 
+	return OnMessage(uID, uMsg, wParam, lParam);
 }
 
 // 控件界面刷新
@@ -576,10 +680,20 @@ LRESULT CDuiPanel::OnControlUpdate(CRect rcUpdate, BOOL bUpdate, CControlBase *p
 	if(m_nVirtualHeight > m_rc.Height())
 	{
 		// 计算显示位置
-		CScrollV* pScrollV = (CScrollV*)m_pControScrollV;
+		CDuiScrollVertical* pScrollV = (CDuiScrollVertical*)m_pControScrollV;
 		int nCurPos = pScrollV->GetScrollCurrentPos();	// 当前top位置
 		int nMaxRange = pScrollV->GetScrollMaxRange();
 		nVirtualTop = (nMaxRange > 0) ? nCurPos*(m_nVirtualHeight-m_rc.Height())/nMaxRange : 0;	// 当前显示的是虚拟图片中什么位置开始的图片
+	}
+
+	int nVirtualLeft = 0;
+	if(m_nVirtualWidth > m_rc.Width())
+	{
+		// 计算显示位置
+		CDuiScrollHorizontal* pScrollH = (CDuiScrollHorizontal*)m_pControScrollH;
+		int nCurPosH = pScrollH->GetScrollCurrentPos();	// 当前top位置
+		int nMaxRangeH = pScrollH->GetScrollMaxRange();
+		nVirtualLeft = (nMaxRangeH > 0) ? nCurPosH*(m_nVirtualLeft-m_rc.Width())/nMaxRangeH : 0;	// 当前显示的是虚拟图片中什么位置开始的图片
 	}
 
 	CRect rcAllUpDate = rcUpdate;
@@ -610,7 +724,7 @@ LRESULT CDuiPanel::OnControlUpdate(CRect rcUpdate, BOOL bUpdate, CControlBase *p
 	}
 
 	// 按照滚动位置修改更新区域
-	rcAllUpDate.OffsetRect(0, -nVirtualTop);
+	rcAllUpDate.OffsetRect(-nVirtualLeft, -nVirtualTop);
 	rcAllUpDate |= m_rc;
 
 	InvalidateRect(&rcAllUpDate);

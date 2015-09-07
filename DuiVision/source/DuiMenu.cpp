@@ -99,7 +99,7 @@ BOOL CDuiMenu::Load(DuiXmlNode pXmlElem, BOOL bLoadSubControl)
 		int nId = nIdIndex;
 		if(strId != _T(""))
 		{
-			nId = _wtoi(strId);
+			nId = _ttoi(strId);
 		}
 
 		CString strType = pItemElem.attribute(_T("type")).value();
@@ -121,7 +121,7 @@ BOOL CDuiMenu::Load(DuiXmlNode pXmlElem, BOOL bLoadSubControl)
 		}else
 		if(!strImage.IsEmpty())
 		{
-			UINT nResourceID = _wtoi(strImage);
+			UINT nResourceID = _ttoi(strImage);
 			AddMenu(strTitleU, nIdIndex, nResourceID);
 		}else
 		{
@@ -182,7 +182,7 @@ BOOL CDuiMenu::LoadXmlNode(DuiXmlNode pXmlElem, CString strXmlFile)
 				if(pControl->Load(pControlElem))
 				{
 					// 如果Load成功,则添加控件
-					if(pControl->IsClass(CArea::GetClassName()) || pControl->IsClass(CFrame::GetClassName()))
+					if(pControl->IsClass(CArea::GetClassName()) || pControl->IsClass(CDuiFrame::GetClassName()))
 					{
 						// Area和Frame不能响应鼠标,必须加到Area列表中
 						m_vecArea.push_back(pControl);

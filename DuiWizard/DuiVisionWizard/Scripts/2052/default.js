@@ -188,8 +188,10 @@ function AddConfig(proj, strProjectName)
 		CLTool.SuppressStartupBanner = true;
 		CLTool.WarningLevel = warningLevelOption.warningLevel_3;
 		CLTool.AdditionalIncludeDirectories = '..\\DuiVision\\include;..\\DuiVision\\common;';//%(AdditionalIncludeDirectories)';
+		CLTool.DebugInformationFormat = 3;	// 调试信息格式:0=none, 1=Z7, 2=Zi, 3=ZI
 		CLTool.PreprocessorDefinitions = 'WIN32;_WINDOWS;STRICT;_DEBUG;_CRT_SECURE_NO_WARNINGS;'; //%(PreprocessorDefinitions)';
-		CLTool.RuntimeLibrary = 3; // 0=MT, 1=MTd, 2=MTD (DLL), 3=MTDd
+		CLTool.RuntimeLibrary = 3; // 运行时库:0=MT, 1=MTd, 2=MTD (DLL), 3=MTDd
+		CLTool.Optimization = 0; // 优化:0=disabled, 1=minspace, 2=maxspe
 
 		var LinkTool = config.Tools('VCLinkerTool');
 		// TODO: 添加链接器设置
@@ -197,15 +199,15 @@ function AddConfig(proj, strProjectName)
 		LinkTool.LinkIncremental = linkIncrementalYes;
 		LinkTool.SuppressStartupBanner = true;  // nologo
 		LinkTool.OutputFile = "$(outdir)/" + strProjectName + "d" + strProjExeExt;	// 输出文件
-		LinkTool.AdditionalLibraryDirectories = "../Lib;";	// 附加库目录
+		LinkTool.AdditionalLibraryDirectories = "../Lib;../DuiVision/third-part/wke;";	// 附加库目录
 		// 附加依赖项
 		if(dte.Version == '9.0')
 		{
-			LinkTool.AdditionalDependencies = "DuiVision.2008d.lib";	// VC2008库
+			LinkTool.AdditionalDependencies = "DuiVision.2008d.lib wke.lib";	// VC2008库
 		}else
 		if(dte.Version == '10.0')
 		{
-			LinkTool.AdditionalDependencies = "DuiVision.2010d.lib";	// VC2010库
+			LinkTool.AdditionalDependencies = "DuiVision.2010d.lib wke.lib";	// VC2010库
 		}
 
 		// Release设置
@@ -238,15 +240,15 @@ function AddConfig(proj, strProjectName)
 		LinkTool.LinkIncremental = linkIncrementalYes;
 		LinkTool.SuppressStartupBanner = true;  // nologo
 		LinkTool.OutputFile = "$(outdir)/" + strProjectName + strProjExeExt;	// 输出文件
-		LinkTool.AdditionalLibraryDirectories = "../Lib;";	// 附加库目录
+		LinkTool.AdditionalLibraryDirectories = "../Lib;../DuiVision/third-part/wke;";	// 附加库目录
 		// 附加依赖项
 		if(dte.Version == '9.0')
 		{
-			LinkTool.AdditionalDependencies = "DuiVision.2008.lib";	// VC2008库
+			LinkTool.AdditionalDependencies = "DuiVision.2008.lib wke.lib";	// VC2008库
 		}else
 		if(dte.Version == '10.0')
 		{
-			LinkTool.AdditionalDependencies = "DuiVision.2010.lib";	// VC2010库
+			LinkTool.AdditionalDependencies = "DuiVision.2010.lib wke.lib";	// VC2010库
 		}
 	}
 	catch(e)
@@ -383,6 +385,12 @@ function GetTargetName(strName, strProjectName)
             strName = strName.substr(5);
             strTarget = '..\\bin\\' + strName;
         }
+		
+		if (strName.indexOf('[bin_source]') == 0) // bin目录下的文件
+        {
+            strName = strName.substr(12);
+            strTarget = '..\\bin\\' + strName;
+        }
 
 		return strTarget;
 	}
@@ -445,21 +453,19 @@ function AddFilesToCustomProj(proj, strProjectName, strProjectPath, InfFile)
 				    filter = filterXml;
 				    isTabFile = true;
 				}else
-				if (strTpl.indexOf('[duivision]') == 0) // DuiVision库文件
+				if (strTpl.indexOf('[duivision]') == 0) // DuiVision库文件,从代码库目录拷贝
 				{
 				    strTpl = '..\\..\\..\\..\\DuiVision\\' + strTpl.substr(11);
 					bCopyOnly = true;
 				}else
-				if (strTpl.indexOf('[bin]') == 0) // bin
+				if (strTpl.indexOf('[bin]') == 0) // 生成bin目录下的可能需要替换的文件,从向导目录拷贝
 				{
-					if( (strTpl == '[bin]xml\\resource.xml') ||
-						(strTpl == '[bin]xml\\duivision\\dlg_main.xml') )
-					{
-						strTpl = 'bin\\' + strTpl.substr(5);
-					}else
-					{
-						strTpl = '..\\..\\..\\..\\bin\\' + strTpl.substr(5);
-					}
+				    strTpl = 'bin\\' + strTpl.substr(5);
+				    bCopyOnly = true;
+				}else
+				if (strTpl.indexOf('[bin_source]') == 0) // bin目录下的依赖库文件,从代码库目录拷贝
+				{
+				    strTpl = '..\\..\\..\\..\\bin\\' + strTpl.substr(12);
 				    bCopyOnly = true;
 				}
 
@@ -467,7 +473,8 @@ function AddFilesToCustomProj(proj, strProjectName, strProjectPath, InfFile)
 				var strFile = strProjectPath + '\\' + strTarget;
 
 				var strExt = strName.substr(strName.lastIndexOf("."));
-				if(strExt==".bmp" || strExt==".png" || strExt==".jpg" || strExt==".ico" || strExt==".gif" || strExt==".rtf" || strExt==".css")
+				if(strExt==".bmp" || strExt==".png" || strExt==".jpg" || strExt==".ico" || strExt==".gif"
+					|| strExt==".rtf" || strExt==".css" || strExt==".lib" || strExt==".dll")
 				    bBinary = true;
 				if (!isTabFile) {
                     // 复制文件和添加到工程

@@ -7,7 +7,7 @@ CMenuItem::CMenuItem(HWND hWnd, CDuiObject* pDuiObject)
 	m_enButtonState = enBSNormal;
 	m_bDown = false;
 	m_bMouseDown = false;
-	m_uVAlignment = DT_VCENTER;
+	m_uVAlignment = VAlign_Middle;
 	m_bSelect = FALSE;
 	m_bIsSeparator = FALSE;
 	m_bIsPopup = FALSE;
@@ -34,7 +34,7 @@ CMenuItem::CMenuItem(HWND hWnd, CDuiObject* pDuiObject, UINT uControlID, CRect r
 	m_enButtonState = enBSNormal;
 	m_bDown = false;
 	m_bMouseDown = false;
-	m_uVAlignment = DT_VCENTER;
+	m_uVAlignment = VAlign_Middle;
 	m_bSelect = bSelect;
 	m_bIsPopup = FALSE;
 	m_pPopupMenu = NULL;
@@ -181,13 +181,13 @@ void CMenuItem::ShowPopupMenu()
 				CRect rc;
 				m_pPopupMenu->GetWindowRect(&rc);
 				// 如果超出屏幕右侧范围,则菜单窗口往左移动一些,移动到当前菜单的左侧
-				int nScreenWidth= GetSystemMetrics(SM_CXFULLSCREEN);
+				int nScreenWidth= GetSystemMetrics(SM_CXSCREEN);
 				if(rc.right > nScreenWidth)
 				{
 					//rc.OffsetRect(nScreenWidth - rc.right -10, 0);	// 移动到屏幕最右侧
 					rc.OffsetRect(-(nMenuWidth + rc.Width()), 0);	// 移动到当前菜单左侧
 				}
-				int nScreenHeight= GetSystemMetrics(SM_CYFULLSCREEN);
+				int nScreenHeight= GetSystemMetrics(SM_CYSCREEN);
 				if(rc.bottom > nScreenHeight)
 				{
 					rc.OffsetRect(0, -(rc.Height() - m_rc.Height()));	// 高度超出屏幕则改为下对齐方式
@@ -352,6 +352,7 @@ HRESULT CMenuItem::OnAttributeCheck(const CString& strValue, BOOL bLoading)
 	return bLoading?S_FALSE:S_OK;
 }
 
+// 鼠标移动事件处理
 BOOL CMenuItem::OnControlMouseMove(UINT nFlags, CPoint point)
 {
 	enumButtonState buttonState = m_enButtonState;
@@ -455,6 +456,7 @@ BOOL CMenuItem::OnControlMouseMove(UINT nFlags, CPoint point)
 	return false;
 }
 
+// 鼠标左键按下事件处理
 BOOL CMenuItem::OnControlLButtonDown(UINT nFlags, CPoint point)
 {
 	enumButtonState buttonState = m_enButtonState;
@@ -492,6 +494,7 @@ BOOL CMenuItem::OnControlLButtonDown(UINT nFlags, CPoint point)
 	return false;
 }
 
+// 鼠标左键放开事件处理
 BOOL CMenuItem::OnControlLButtonUp(UINT nFlags, CPoint point)
 {
 	bool bSend = false;
@@ -537,6 +540,18 @@ BOOL CMenuItem::OnControlLButtonUp(UINT nFlags, CPoint point)
 		}
 		else
 		{
+			// 如果存在弹出菜单,并且鼠标不在弹出菜单范围内,则关闭父菜单
+			if(m_bIsPopup)
+			{
+				// 父菜单对象设置回自动关闭
+				CDuiMenu* pParentMenu = GetParentMenu();
+				if(pParentMenu)
+				{
+					pParentMenu->SetAutoClose(TRUE);
+					pParentMenu->SetForegroundWindow();
+				}
+			}
+
 			if(m_bDown)
 			{
 				m_enButtonState = enBSDown;
@@ -575,6 +590,7 @@ BOOL CMenuItem::OnControlLButtonUp(UINT nFlags, CPoint point)
 	return false;
 }
 
+// 设置控件禁用属性
 void  CMenuItem::SetControlDisable(BOOL bIsDisable)
 {
 	if(m_bIsDisable != bIsDisable)
@@ -606,6 +622,7 @@ void  CMenuItem::SetControlDisable(BOOL bIsDisable)
 	}
 }
 
+// 画控件
 void CMenuItem::DrawControl(CDC &dc, CRect rcUpdate)
 {
 	int nWidth = m_rc.Width();
@@ -614,11 +631,6 @@ void CMenuItem::DrawControl(CDC &dc, CRect rcUpdate)
 	if(!m_bUpdate)
 	{
 		int nImageCount = m_bSelect ? 6 : 4;
-		if(m_nImagePicCount != 4)
-		{
-			// 如果修改过img-count属性,则用此属性设置的图片个数
-			nImageCount = m_nImagePicCount;
-		}
 		if(m_bIsSeparator)
 		{
 			nImageCount = 1;
@@ -630,10 +642,22 @@ void CMenuItem::DrawControl(CDC &dc, CRect rcUpdate)
 		{
 			if(m_bIsPopup && (m_pImagePopupArrow == NULL))
 			{
+				// 弹出菜单的箭头,固定是两个小图片
 				m_sizeImage.SetSize(m_pImage->GetWidth() / 2, m_pImage->GetHeight());
 			}else
+			if(m_bIsSeparator)
 			{
-				m_sizeImage.SetSize(m_pImage->GetWidth() / nImageCount, m_pImage->GetHeight());
+				// 分隔线,只有一个图片
+				m_sizeImage.SetSize(m_pImage->GetWidth(), m_pImage->GetHeight());
+			}else
+			if(m_bSelect)
+			{
+				// checkbox或radiobutton,固定为6个小图片
+				m_sizeImage.SetSize(m_pImage->GetWidth() / 6, m_pImage->GetHeight());
+			}else
+			{
+				// 按照设置的小图片个数计算
+				m_sizeImage.SetSize(m_pImage->GetWidth() / m_nImagePicCount, m_pImage->GetHeight());
 			}
 		}
 
@@ -658,9 +682,9 @@ void CMenuItem::DrawControl(CDC &dc, CRect rcUpdate)
 					SolidBrush brush(m_clrHover);//Color(254, 71, 156, 235));
 					graphics.FillRectangle(&brush, i * nWidth+m_nFrameWidth, 0, nWidth-m_nFrameWidth*2, nHeight);
 				}
-				
 			}
 
+			// 画菜单项图片
 			if(m_pImage != NULL)
 			{
 				if(m_bIsSeparator)
@@ -675,10 +699,16 @@ void CMenuItem::DrawControl(CDC &dc, CRect rcUpdate)
 					graphics.DrawImage(m_pImage, Rect(rcTemp.right - m_sizeImage.cx - 6, rcTemp.top + (nHeight - m_sizeImage.cy) / 2, m_sizeImage.cx, m_sizeImage.cy),
 						(i % 2) * m_sizeImage.cx, 0, m_sizeImage.cx, m_sizeImage.cy, UnitPixel);
 				}else
+				if(m_bSelect)
 				{
-					// 普通菜单项的图片
+					// checkbox或radiobutton
 					graphics.DrawImage(m_pImage, Rect(rcTemp.left + (m_nLeft - m_sizeImage.cx) / 2, rcTemp.top + (nHeight - m_sizeImage.cy) / 2, m_sizeImage.cx, m_sizeImage.cy),
 						i * m_sizeImage.cx, 0, m_sizeImage.cx, m_sizeImage.cy, UnitPixel);
+				}else
+				{
+					// 普通菜单项的图片,如果小图片个数不足,则使用第一个小图片
+					graphics.DrawImage(m_pImage, Rect(rcTemp.left + (m_nLeft - m_sizeImage.cx) / 2, rcTemp.top + (nHeight - m_sizeImage.cy) / 2, m_sizeImage.cx, m_sizeImage.cy),
+						((m_nImagePicCount-1 < i) ? 0 : i) * m_sizeImage.cx, 0, m_sizeImage.cx, m_sizeImage.cy, UnitPixel);
 				}
 			}
 
@@ -692,6 +722,7 @@ void CMenuItem::DrawControl(CDC &dc, CRect rcUpdate)
 			rcTemp.OffsetRect(nWidth, 0);
 		}
 		
+		// 画菜单项文字
 		if(!m_strTitle.IsEmpty())
 		{
 			m_memDC.SetBkMode(TRANSPARENT);
@@ -708,7 +739,8 @@ void CMenuItem::DrawControl(CDC &dc, CRect rcUpdate)
 			strFormat.SetAlignment(StringAlignmentNear);
 			strFormat.SetFormatFlags( StringFormatFlagsNoWrap | StringFormatFlagsMeasureTrailingSpaces);
 			Size size = GetTextBounds(font, strFormat, m_strTitle);
-			CPoint point = GetOriginPoint(nWidth - m_nLeft, nHeight, size.Width, size.Height, m_uAlignment, m_uVAlignment);
+			CPoint point = GetOriginPoint(nWidth - m_nLeft, nHeight, size.Width, size.Height,
+							GetGDIAlignment(m_uAlignment), GetGDIVAlignment(m_uVAlignment));
 
 			for(int i = 0; i < nImageCount; i++)
 			{

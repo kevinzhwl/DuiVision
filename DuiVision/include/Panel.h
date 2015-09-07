@@ -23,7 +23,7 @@ public:
 	HRESULT OnAttributePlugin(const CString& strValue, BOOL bLoading);
 
 	void SetVirtualHeight(int nHeight) { m_nVirtualHeight = nHeight; }
-	void CalcVirtualHeight();
+	void SetVirtualWidth(int nWidth) { m_nVirtualWidth = nWidth; }
 
 	void SetEnableScroll(BOOL bEnableScroll) { m_bEnableScroll = bEnableScroll; }
 	BOOL GetEnableScroll() { return m_bEnableScroll; }
@@ -40,17 +40,20 @@ public:
 	// 根据控件名创建控件实例
 	CControlBase* _CreateControlByName(LPCTSTR lpszName);
 
-	HRESULT OnAttributeImageScroll(const CString& strValue, BOOL bLoading);
+	HRESULT OnAttributeImageScrollV(const CString& strValue, BOOL bLoading);
+	HRESULT OnAttributeImageScrollH(const CString& strValue, BOOL bLoading);
 
 	virtual void SetControlRect(CRect rc);
 	virtual void DrawControl(CDC &dc, CRect rcUpdate);
 	virtual BOOL DrawSubControls(CDC &dc, CRect rcUpdate);
+	virtual void SetUpdate(BOOL bUpdate, COLORREF clr = 0);
 
 	virtual BOOL OnMousePointChange(CPoint& point);
 	virtual BOOL OnCheckMouseResponse(UINT nFlags, CPoint point);
 	virtual BOOL OnControlMouseMove(UINT nFlags, CPoint point);
 	virtual BOOL OnControlLButtonDown(UINT nFlags, CPoint point);
 	virtual BOOL OnControlLButtonUp(UINT nFlags, CPoint point);
+	virtual BOOL OnControlLButtonDblClk(UINT nFlags, CPoint point);
 	virtual BOOL OnControlScroll(BOOL bVertical, UINT nFlags, CPoint point);
 	virtual BOOL OnControlKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 	virtual	BOOL OnControlTimer();
@@ -61,9 +64,12 @@ public:
 	BOOL				m_bInit;					// 是否初始化完成
 	CString				m_strXmlFile;				// XML文件名
 	int					m_nVirtualHeight;			// Panel整体的高度
+	int					m_nVirtualWidth;			// Panel整体的宽度
 	CControlBaseFont*	m_pControScrollV;			// 垂直滚动条
+	CControlBaseFont*	m_pControScrollH;			// 水平滚动条
 	int					m_nScrollWidth;				// 滚动条宽度
 	int					m_nVirtualTop;				// 当前虚拟显示的顶部位置
+	int					m_nVirtualLeft;				// 当前虚拟显示的顶部位置
 	BOOL				m_bEnableScroll;			// 是否允许滚动
 
 	HINSTANCE			m_hPluginHandle;			// 保存界面插件动态库的句柄
@@ -71,7 +77,8 @@ public:
 	IDuiPluginPanel*	m_pDuiPluginObject;			// 界面插件对象
 
 	DUI_DECLARE_ATTRIBUTES_BEGIN()
-		DUI_CUSTOM_ATTRIBUTE("img-scroll", OnAttributeImageScroll)
+		DUI_CUSTOM_ATTRIBUTE("img-scroll", OnAttributeImageScrollV)
+		DUI_CUSTOM_ATTRIBUTE("img-scrollh", OnAttributeImageScrollH)
 		DUI_INT_ATTRIBUTE("scroll-width", m_nScrollWidth, FALSE)
 		DUI_CUSTOM_ATTRIBUTE("xml", OnAttributeXml)
 #ifdef _DEBUG

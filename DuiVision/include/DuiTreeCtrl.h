@@ -1,4 +1,4 @@
-// Panel控件，此控件是一个控件容器
+// 树控件
 #pragma once
 
 #include "Panel.h"
@@ -89,21 +89,25 @@ public:
 	int  GetNodeRow(HTREEITEM hNode);
 	int	 GetNodeLastChildRow(HTREEITEM hNode);
 	BOOL HaveChildNode(HTREEITEM hNode);
+	HTREEITEM GetParentNode(HTREEITEM hNode);
 	HTREEITEM GetChildNode(HTREEITEM hNode);
 	HTREEITEM GetNextSiblingNode(HTREEITEM hNode);
 	HTREEITEM GetPrevSiblingNode(HTREEITEM hNode);
+	int  GetChildNodeCount(HTREEITEM hNode);
 	int  GetNodeLevel(HTREEITEM hNode);
-	HTREEITEM GetNodeWithId(CString strId);
+	HTREEITEM GetNodeById(CString strId);
 	TreeNodeInfo* GetNodeInfo(HTREEITEM hNode);
 	TreeItemInfo* GetItemInfo(HTREEITEM hNode, int nItem);
 	void SetItemInfo(HTREEITEM hNode, int nItem, TreeItemInfo* pItemInfo);
 	void SetNodeColor(HTREEITEM hNode, Color clrText);
 	void ToggleNode(HTREEITEM hNode);
+	void ExpandNode(HTREEITEM hNode, BOOL bExpand);
 	void SetNodeCheck(HTREEITEM hNode, int nCheck);
 	int  GetNodeCheck(HTREEITEM hNode);
 	void ClearNodes();
 	void HideChildNodes(HTREEITEM hItem);
 	void RefreshNodeRows();
+	BOOL EnsureVisible(HTREEITEM hNode, BOOL bPartialOK);
 
 	BOOL PtInRow(CPoint point, TreeNodeInfo& rowInfo);
 	BOOL PtInRowCheck(CPoint point, TreeNodeInfo& rowInfo);
@@ -123,6 +127,7 @@ protected:
 	virtual BOOL OnControlMouseMove(UINT nFlags, CPoint point);
 	virtual BOOL OnControlLButtonDown(UINT nFlags, CPoint point);
 	virtual BOOL OnControlLButtonUp(UINT nFlags, CPoint point);
+	virtual BOOL OnControlLButtonDblClk(UINT nFlags, CPoint point);
 	virtual BOOL OnControlScroll(BOOL bVertical, UINT nFlags, CPoint point);
 
 	HRESULT OnAttributeFontTitle(const CString& strValue, BOOL bLoading);
@@ -136,10 +141,11 @@ public:
 	int					m_nFontTitleWidth;	// 标题字体宽度
 	FontStyle			m_fontTitleStyle;	// 标题字体Style
 	Color				m_clrText;			// 文字颜色
-	Color				m_clrTextHover;		// 文字颜色
-	Color				m_clrTextDown;		// 文字颜色
+	Color				m_clrTextHover;		// 文字颜色(鼠标移动)
+	Color				m_clrTextDown;		// 文字颜色(鼠标按下)
 	Color				m_clrTitle;			// 标题颜色
 	Color				m_clrSeperator;		// 分割线颜色
+	Color				m_clrRowHover;		// 行背景颜色(鼠标移动到行)
 	int					m_nLeftPos;			// 左侧起始位置
 	int					m_nRowHeight;		// 行高度
 	int					m_nBkTransparent;	// 背景透明度
@@ -176,6 +182,7 @@ public:
 		DUI_COLOR_ATTRIBUTE(_T("crpush"), m_clrTextDown, FALSE)
 		DUI_COLOR_ATTRIBUTE(_T("crtitle"), m_clrTitle, FALSE)
 		DUI_COLOR_ATTRIBUTE(_T("crsep"), m_clrSeperator, FALSE)
+		DUI_COLOR_ATTRIBUTE(_T("crrowhover"), m_clrRowHover, FALSE)
 		DUI_INT_ATTRIBUTE(_T("row-height"), m_nRowHeight, FALSE)
 		DUI_INT_ATTRIBUTE(_T("left-pos"), m_nLeftPos, FALSE)
 		DUI_INT_ATTRIBUTE(_T("wrap"), m_bTextWrap, FALSE)

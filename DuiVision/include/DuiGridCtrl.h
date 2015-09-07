@@ -1,4 +1,4 @@
-// Panel控件，此控件是一个控件容器
+// 表格控件
 #pragma once
 
 #include "Panel.h"
@@ -12,6 +12,8 @@ struct GridColumnInfo
 	CString strTitle;		// 标题
 	Color	clrText;		// 文字颜色
 	int		nWidth;			// 列宽度
+	UINT	uAlignment;		// 水平对齐方式
+	UINT	uVAlignment;	// 垂直对齐方式
 };
 
 // 单元格信息
@@ -61,7 +63,9 @@ public:
 
 	virtual BOOL Load(DuiXmlNode pXmlElem, BOOL bLoadSubControl = TRUE);
 
-	BOOL InsertColumn(int nColumn, CString strTitle, int nWidth = -1, Color clrText = Color(0, 0, 0, 0));
+	BOOL InsertColumn(int nColumn, CString strTitle, int nWidth = -1, Color clrText = Color(0, 0, 0, 0),
+		UINT uAlignment = 0xFFFFUL, UINT uVAlignment = 0xFFFFUL);
+	int GetTotalColumnWidth();
 	int InsertRow(int nRow, CString strId,
 		int nImageIndex = -1, Color clrText = Color(0, 0, 0, 0), CString strImage = _T(""),
 		int nRightImageIndex = -1, CString strRightImage = _T(""),
@@ -76,6 +80,8 @@ public:
 	BOOL DeleteSubItemControl(CString strControlName, UINT uControlID = ID_NULL);
 	BOOL DeleteRow(int nRow);
 	void CalcRowsPos();
+	void CalcColumnsPos();
+	BOOL EnsureVisible(int nRow, BOOL bPartialOK);
 	int  GetRowCount() { return m_vecRowInfo.size(); }
 	GridRowInfo* GetRowInfo(int nRow);
 	GridItemInfo* GetItemInfo(int nRow, int nItem);
@@ -101,7 +107,10 @@ protected:
 	virtual BOOL OnControlMouseMove(UINT nFlags, CPoint point);
 	virtual BOOL OnControlLButtonDown(UINT nFlags, CPoint point);
 	virtual BOOL OnControlLButtonUp(UINT nFlags, CPoint point);
+	virtual BOOL OnControlLButtonDblClk(UINT nFlags, CPoint point);
 	virtual BOOL OnControlScroll(BOOL bVertical, UINT nFlags, CPoint point);
+	virtual BOOL OnControlRButtonDown(UINT nFlags, CPoint point);
+	virtual BOOL OnControlRButtonUp(UINT nFlags, CPoint point);
 
 	HRESULT OnAttributeFontTitle(const CString& strValue, BOOL bLoading);
 
@@ -133,6 +142,7 @@ public:
 	int					m_nFirstViewRow;	// 当前显示区的第一行的序号
 	int					m_nLastViewRow;		// 当前显示区的最后一行的序号
 	int					m_nVirtualTop;		// 当前滚动条位置对应的虚拟的top位置
+	int					m_nVirtualLeft;		// 当前滚动条位置对应的虚拟的left位置
 
 	BOOL				m_bGridTooltip;		// 是否显示单元格的Tooltip
 	int					m_nTipRow;			// 当前tip行

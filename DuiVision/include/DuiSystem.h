@@ -118,6 +118,10 @@ public:
 	BOOL LoadImageFile(CString strFileName, BOOL useEmbeddedColorManagement, Image*& pImage);
 	// 加载图片文件,支持从zip文件中加载
 	BOOL LoadBitmapFile(CString strFileName, CBitmap &bitmap, CSize &size);
+	// 加载图标文件,支持从zip文件中加载
+	BOOL LoadIconFile(CString strFileName, HICON& hIcon);
+	// 加载通用文件到内存,支持从zip文件中加载
+	BOOL LoadFileToBuffer(CString strFileName, BYTE*& pBuffer);
 	// 加载界面插件动态库
 	BOOL LoadPluginFile(CString strFileName, CString strObjType, HINSTANCE& hPluginHandle, LPVOID& pPluginObj);
 	// 获取系统配置信息
@@ -215,9 +219,7 @@ public:
 	CRITICAL_SECTION* GetLogMutex() { return &m_WriteLogMutex; }
 	void InitLog();
 	void DoneLog();
-	static void	LogEvent(int nLevel, LPCWSTR lpFormat, ...);
-
-	//HRESULT CreateTextServices(IUnknown *punkOuter, ITextHost *pITextHost, IUnknown **ppUnk);
+	static void	LogEvent(int nLevel, LPCTSTR lpFormat, ...);
 
 protected:
     void createSingletons();
@@ -252,7 +254,4 @@ protected:
 	CDlgBase*				m_pNotifyMsgBox;						// 动态提示信息框
 
 	NOTIFYICONDATA			m_NotifyIconData;						// 托盘数据
-
-	//HINSTANCE	m_rich20;	//richedit module
-	//PCreateTextServices	m_funCreateTextServices;
 };

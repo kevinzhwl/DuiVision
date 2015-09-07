@@ -1,4 +1,4 @@
-// Panel控件，此控件是一个控件容器
+// 列表控件
 #pragma once
 
 #include "Panel.h"
@@ -56,6 +56,7 @@ public:
 	int InsertItem(int nItem, ListRowInfo &rowInfo);
 	BOOL DeleteItem(int nItem);
 	void CalcItemsPos();
+	BOOL EnsureVisible(int nRow, BOOL bPartialOK);
 	int  GetItemCount() { return m_vecRowInfo.size(); }
 	ListRowInfo* GetItemInfo(int nRow);
 	void SetRowColor(int nRow, Color clrText);
@@ -79,6 +80,7 @@ protected:
 	virtual BOOL OnControlMouseMove(UINT nFlags, CPoint point);
 	virtual BOOL OnControlLButtonDown(UINT nFlags, CPoint point);
 	virtual BOOL OnControlLButtonUp(UINT nFlags, CPoint point);
+	virtual BOOL OnControlLButtonDblClk(UINT nFlags, CPoint point);
 	virtual BOOL OnControlScroll(BOOL bVertical, UINT nFlags, CPoint point);
 
 	HRESULT OnAttributeFontTitle(const CString& strValue, BOOL bLoading);
