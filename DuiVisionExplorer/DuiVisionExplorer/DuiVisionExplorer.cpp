@@ -60,7 +60,7 @@ BOOL CDuiVisionExplorerApp::InitInstance()
 			if(__argc > 0)
 			{
 				strCmd = __targv[0];
-				DuiSystem::LogEvent(LOG_LEVEL_DEBUG, L"Command line:%s", strCmd);
+				DuiSystem::LogEvent(DUIV_LOG_LEVELDEBUG, L"Command line:%s", strCmd);
 			}
 
 			// 发送进程间消息(lParam为1表示不显示界面,appMutex作为应用名,信息参数传递命令行参数)
