@@ -113,7 +113,7 @@ int CDuiPlugin::OnInit(UINT nIDTemplate, HWND hWnd, LPCTSTR lpszName, CRect rc)
 	DWORD dwLangID = 0;
 	new DuiSystem(NULL, dwLangID, _T(""), 1116, nIDTemplate, _T(""));
 
-	DuiSystem::LogEvent(LOG_LEVEL_DEBUG, _T("CDuiPlugin::OnInit root path is %s"), GetPlugInRootPath());
+	DuiSystem::LogEvent(DUIV_LOG_LEVELDEBUG, _T("CDuiPlugin::OnInit root path is %s"), GetPlugInRootPath());
 
 	// 加载xml
 	m_pDuiPanel = (CDuiPanel*)DuiSystem::CreateControlByName(_T("div"), hWnd, NULL);
@@ -128,8 +128,8 @@ int CDuiPlugin::OnInit(UINT nIDTemplate, HWND hWnd, LPCTSTR lpszName, CRect rc)
 		BOOL bRet = m_pDuiPanel->LoadXmlFile(lpszName);
 		// 事件处理对象初始化
 		pHandler->OnInit();
-		//DuiSystem::LogEvent(LOG_LEVEL_DEBUG, _T("CDuiPlugin::OnInit load %s %s"), A2W(lpszName), bRet ? _T("succ") : _T("fail"));
-		DuiSystem::LogEvent(LOG_LEVEL_DEBUG, _T("CDuiPlugin::OnInit load %s %s"), lpszName, bRet ? _T("succ") : _T("fail"));
+		//DuiSystem::LogEvent(DUIV_LOG_LEVELDEBUG, _T("CDuiPlugin::OnInit load %s %s"), A2W(lpszName), bRet ? _T("succ") : _T("fail"));
+		DuiSystem::LogEvent(DUIV_LOG_LEVELDEBUG, _T("CDuiPlugin::OnInit load %s %s"), lpszName, bRet ? _T("succ") : _T("fail"));
 	}
 
 	return 0;

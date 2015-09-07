@@ -760,7 +760,7 @@ BOOL DuiSystem::LoadXmlFile(DuiXmlDocument& xmlDoc, CString strFileName)
 				//delete[] pByte;
 			}else
 			{
-				DuiSystem::LogEvent(LOG_LEVEL_ERROR, _T("DuiSystem::LoadXmlFile %s failed, not found xml in zip file"), strXmlFile);
+				DuiSystem::LogEvent(DUIV_LOG_LEVELERROR, _T("DuiSystem::LoadXmlFile %s failed, not found xml in zip file"), strXmlFile);
 				return FALSE;
 			}
 		}
@@ -780,7 +780,7 @@ BOOL DuiSystem::LoadXmlFile(DuiXmlDocument& xmlDoc, CString strFileName)
 		}else
 		{
 			// 文件不存在
-			DuiSystem::LogEvent(LOG_LEVEL_ERROR, _T("DuiSystem::LoadXmlFile %s failed, not found xml file"), strXmlFile);
+			DuiSystem::LogEvent(DUIV_LOG_LEVELERROR, _T("DuiSystem::LoadXmlFile %s failed, not found xml file"), strXmlFile);
 			return FALSE;
 		}
 	}
@@ -1056,7 +1056,7 @@ BOOL DuiSystem::LoadPluginFile(CString strFileName, CString strObjType, HINSTANC
 	{
 		// 加载失败
 		DWORD dwError = ::GetLastError();
-		DuiSystem::LogEvent(LOG_LEVEL_ERROR, _T("Load UI plugin %s failed, errorcode is %u"), strPluginFile, dwError);
+		DuiSystem::LogEvent(DUIV_LOG_LEVELERROR, _T("Load UI plugin %s failed, errorcode is %u"), strPluginFile, dwError);
 		return FALSE;
 	}
 
@@ -1066,11 +1066,11 @@ BOOL DuiSystem::LoadPluginFile(CString strFileName, CString strObjType, HINSTANC
 	if(fnCreateObject == NULL)
 	{
 		FreeLibrary(hPluginHandle);
-		DuiSystem::LogEvent(LOG_LEVEL_ERROR, _T("Load UI plugin %s failed, not found CreateObject function"), strPluginFile);
+		DuiSystem::LogEvent(DUIV_LOG_LEVELERROR, _T("Load UI plugin %s failed, not found CreateObject function"), strPluginFile);
 		return FALSE;
 	}
 
-	DuiSystem::LogEvent(LOG_LEVEL_DEBUG, _T("Load UI plugin %s succ"), strPluginFile);
+	DuiSystem::LogEvent(DUIV_LOG_LEVELDEBUG, _T("Load UI plugin %s succ"), strPluginFile);
 
 	LPVOID pIVciControl = NULL;
 	//pPluginObj = fnCreateObject(CEncodingUtil::UnicodeToAnsi(strObjType), &pIVciControl, NULL);
@@ -1078,11 +1078,11 @@ BOOL DuiSystem::LoadPluginFile(CString strFileName, CString strObjType, HINSTANC
 	if(pPluginObj == NULL)
 	{
 		FreeLibrary(hPluginHandle);
-		DuiSystem::LogEvent(LOG_LEVEL_ERROR, _T("Create UI plugin %s - %s object failed"), strPluginFile, strObjType);
+		DuiSystem::LogEvent(DUIV_LOG_LEVELERROR, _T("Create UI plugin %s - %s object failed"), strPluginFile, strObjType);
 		return FALSE;
 	}
 
-	DuiSystem::LogEvent(LOG_LEVEL_DEBUG, _T("Create UI plugin %s - %s object succ"), strPluginFile, strObjType);
+	DuiSystem::LogEvent(DUIV_LOG_LEVELDEBUG, _T("Create UI plugin %s - %s object succ"), strPluginFile, strObjType);
 
 	return TRUE;
 }
@@ -2698,13 +2698,13 @@ void DuiSystem::InitLog()
 	m_bLogEnable = TRUE;
 	InitializeCriticalSection(&m_WriteLogMutex);
 
-	DuiSystem::LogEvent(LOG_LEVEL_DEBUG, _T("------------------DuiVision Start-------------------"));
+	DuiSystem::LogEvent(DUIV_LOG_LEVELDEBUG, _T("------------------DuiVision Start-------------------"));
 }
 
 // 结束日志
 void DuiSystem::DoneLog()
 {
-	DuiSystem::LogEvent(LOG_LEVEL_DEBUG, _T("------------------DuiVision End-------------------"));
+	DuiSystem::LogEvent(DUIV_LOG_LEVELDEBUG, _T("------------------DuiVision End-------------------"));
 	DeleteCriticalSection(&m_WriteLogMutex);
 }
 

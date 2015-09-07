@@ -109,7 +109,7 @@ BOOL CDuiPanel::LoadXmlFile(CString strFileName)
 
 	if(!DuiSystem::Instance()->LoadXmlFile(xmlDoc, strFileName))
 	{
-		DuiSystem::LogEvent(LOG_LEVEL_ERROR, _T("CDuiPanel::LoadXmlFile %s failed"), strFileName);
+		DuiSystem::LogEvent(DUIV_LOG_LEVELERROR, _T("CDuiPanel::LoadXmlFile %s failed"), strFileName);
 		return FALSE;
 	}
 
@@ -117,14 +117,14 @@ BOOL CDuiPanel::LoadXmlFile(CString strFileName)
 	pDivElem = xmlDoc.child(_T("div"));
 	if(pDivElem == NULL)
 	{
-		DuiSystem::LogEvent(LOG_LEVEL_ERROR, _T("CDuiPanel::LoadXmlFile %s failed, not found div node"), strFileName);
+		DuiSystem::LogEvent(DUIV_LOG_LEVELERROR, _T("CDuiPanel::LoadXmlFile %s failed, not found div node"), strFileName);
 		return FALSE;
 	}
 
 	// 加载div节点属性
 	if(!Load(pDivElem))
 	{
-		DuiSystem::LogEvent(LOG_LEVEL_ERROR, _T("CDuiPanel::LoadXmlFile %s failed, load div node fail"), strFileName);
+		DuiSystem::LogEvent(DUIV_LOG_LEVELERROR, _T("CDuiPanel::LoadXmlFile %s failed, load div node fail"), strFileName);
 		return FALSE;
 	}
 

@@ -42,7 +42,7 @@ CDuiHandlerPlugin::~CDuiHandlerPlugin(void)
 // 初始化
 void CDuiHandlerPlugin::OnInit()
 {
-	DuiSystem::LogEvent(LOG_LEVEL_DEBUG, _T("CDuiHandlerPlugin::OnInit"));
+	DuiSystem::LogEvent(DUIV_LOG_LEVELDEBUG, _T("CDuiHandlerPlugin::OnInit"));
 
 	// 启动动画定时器
 	m_uTimerAni = DuiSystem::AddDuiTimer(500);

@@ -2563,7 +2563,7 @@ BOOL CDlgBase::PreTranslateMessage(MSG* pMsg)
 	}else
 	/*if ( pMsg->message == WM_CHAR)
 	{
-		//DuiSystem::LogEvent(LOG_LEVEL_DEBUG, L"WM_CHAR:%d,%d", pMsg->wParam, pMsg->lParam);
+		//DuiSystem::LogEvent(DUIV_LOG_LEVELDEBUG, L"WM_CHAR:%d,%d", pMsg->wParam, pMsg->lParam);
 		//CControlBase* pFocusControl = GetFocusControl();
 		//if(pFocusControl && (pFocusControl->GetNativeHWnd() != NULL))
 		//{
