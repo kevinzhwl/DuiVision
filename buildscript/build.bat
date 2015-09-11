@@ -2,7 +2,7 @@
 set DEPLOY=DuiVisionDemo
 set OUTPUT_DIR=%WORKSPACE%\out\%DEPLOY%
 set DEPLOY_DIR=%WORKSPACE%\out\deploy
-set PROJECT=DuiVisionDemo.2010.sln
+set PROJECT=DuiVistaDemo.sln
 set ZIPEXE=C:\PROGRA~1\7-Zip\7z.exe
 
 set VC10VARS="C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat"
@@ -27,6 +27,8 @@ msbuild.exe %WORKSPACE%\%PROJECT% /p:Configuration=Debug /p:Platform=Win32 /t:Re
 
 )
 
+goto deployjob
+
 rmdir /S/Q %OUTPUT_DIR%
 rmdir /S/Q %DEPLOY_DIR%
 mkdir %OUTPUT_DIR%
@@ -47,5 +49,7 @@ del /Q %OUTPUT_DIR%\*.ilk
 echo build installer starting...
 
 :::call %~dp0buildmsi.bat 32bit 64bit
+
+:deplyjob
 call %~dp0deploy.bat
 echo build installer finished
