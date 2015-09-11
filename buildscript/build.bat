@@ -50,6 +50,6 @@ echo build installer starting...
 
 :::call %~dp0buildmsi.bat 32bit 64bit
 
-:deplyjob
+:deployjob
 call %~dp0deploy.bat
 echo build installer finished
