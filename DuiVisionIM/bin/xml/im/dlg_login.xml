@@ -1,0 +1,78 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<dlg name="dlg_main" title="[APP_NAME]" width="300" height="570" translucent="255"
+	frame="skin:IDB_MAIN_FRAME" bkimg="skin:LOGIN_HEAD" crbk="#ffffff" appwin="0" resize="0" width-lt="3" height-lt="119" width-rb="3" height-rb="30" >
+
+  <base>
+  
+	<imgbtn name="button.close" pos="-45,0,-0,29" skin="IDB_BT_CLOSE" tip="关闭" action="hide-window" show="1"/>
+	<imgbtn name="button.min" pos="-76,0,-46,29" skin="IDB_BT_MIN" tip="最小化" />
+	<imgbtn name="button.menu" pos="-110,0,-77,29" skin="IDB_BT_MENU" tip="菜单" action="menu:menu_main" menupos="-75,-0" show="0" />
+	<imgbtn name="button.skin" pos="-140,0,-111,29" skin="IDB_BT_SKIN" tip="皮肤" show="0"/>
+	<text name="title" crtext="FFFFFF" crmark="800000" crshadow="808080" font="big"
+			pos="10,4,250,25" title="[APP_NAME]" response="0" show="1" />
+	
+  </base>
+  
+  <body>		
+		<area name="area-3" pos="0,-37,-0,-36" begin-transparent="70" end-transparent="70" />
+		<area name="area-4" pos="0,-36,-0,-0" begin-transparent="88" end-transparent="88" />
+		
+		<img name="image" pos="|-50,100" width="107" height="107" skin="IDB_LOGO" mode="normal" framesize="1" show="1" />
+		
+		<text pos="|-110,225,250,245" crshadow="808080" font="big"
+				title="服务器地址" tip="服务器地址" />
+		<edit name="LoginName" skin="IDB_EDIT" left-image="skin:IDB_COMPUTER"
+					pos="|-110,245" width="220" height="30" title="" tip="请输入服务器地址或域名"
+					multiline="0" autohscroll="1" autovscroll="0" number="0" readonly="0" maxchar="50"
+					font="default" crtip="128,128,128,128" />
+		
+			
+			
+		<text pos="|-110,280,250,300" crshadow="808080" font="big"
+				title="登录帐号" tip="登录帐号" />
+		<combobox name="下拉列表框2" skin="IDB_EDIT" small-image="skin:IDB_DROP_DOWN"
+				head-image="skin:IDB_COMBO_ITEM" del-image="skin:IDB_COMBO_ITEM_CLOSE"
+				left-image="skin:IDB_COMPUTER" tip="选择文件类型"
+				value="pdf"
+				pos="|-110,300" width="220" height="30" title="test"
+				crhover="220,128,128,128" >
+				<item name="多媒体文件" desc="多媒体类型的文件" value="media" image="skins\icon\Movies.png" />
+				<item name="PDF文件" desc="PDF类型文件" value="pdf" image="skins\icon\PDFViewer.png" />
+				<item name="邮件" desc="电子邮件" value="mail" image="skins\icon\ico_message.png" crtext="800000" crdesc="80,0,80" />
+				<item name="Excel" desc="电子表格" value="excel" image="skins\icon\ico_report.png" />
+			</combobox>		
+				
+		
+		<text pos="|-110,335,250,354" crshadow="808080" font="big"
+				title="登录密码" tip="登录密码" />
+				
+		<edit name="Password" skin="IDB_EDIT" left-image="skin:IDB_EDIT_PWD"
+					pos="|-110,355" width="220" height="30" title="" tip="请输入密码"
+					password="1" multiline="0" autohscroll="0" autovscroll="0" number="0" readonly="0" maxchar="50"
+					font="default" crtip="128,128,128,128" />
+					
+					
+					
+		<chkbtn name="checkbutton1" skin="IDB_CHECK_BOX"
+				pos="|-110,395,150,420" show="1" title="记住密码" check="true" />
+			
+		<chkbtn name="checkbutton2" skin="IDB_CHECK_BOX"
+			pos="120,395,300,420" show="1" title="自动登录" check="false" />
+			
+			
+		<button pos="|-80,445,|-39,480" skin="IDB_BT_DEFAULT_L" img-btn="skins\State\status_online.png"
+				title="" tip="" animate="0" maxindex="4" action="menu:menu_main" menupos="0,-0" />
+				
+		<button name="tab.control.2" pos="|-40,445,|60,480" skin="IDB_BT_DEFAULT_R" title="登   录" action="dlg:duivision\dlg_main.xml" />
+	
+	<div name="footer" pos="0,-26,-0,-0" >	
+		
+		<textbtn name="textbtn" align="center" pos="10,2,80,-0" show="1" title="选项设置" tip="选项设置" />
+		<text pos="80,2,90,-0" title="|" tip="" />
+		<textbtn name="textbtn" align="center" pos="90,2,160,-0" show="1" title="MCU测试" tip="MCU测试" />
+				
+	</div>	
+	
+  </body>
+  
+</dlg>
