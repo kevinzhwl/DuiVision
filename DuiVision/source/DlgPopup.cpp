@@ -1376,6 +1376,7 @@ CControlBase * CDlgPopup::SetControlDisable(CControlBase *pControlBase, BOOL bDi
 // ÖØÖÃ¿Ø¼þ
 void CDlgPopup::ResetControl()
 {
+  return ;
 	for (size_t i = 0; i < m_vecArea.size(); i++)
 	{
 		CControlBase * pControlBase = m_vecArea.at(i);
