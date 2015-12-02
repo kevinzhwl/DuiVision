@@ -467,6 +467,7 @@ void CDuiMenu::SetMenuPoint()
 		{
 			CMenuItem* pMenuItem = (CMenuItem*)pControlBase;
 			pMenuItem->SetFrameWidth(m_nFrameWidth);
+      pMenuItem->m_nLeft = this->m_nLeft;
 			if(!pMenuItem->GetVisible())
 			{
 				// 菜单项不可见
