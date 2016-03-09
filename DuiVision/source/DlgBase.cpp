@@ -361,7 +361,7 @@ BOOL CDlgBase::OnInitDialog()
 	}
 
 	//启动定时器
-	m_uTimerAnimation = CTimer::SetTimer(30);
+	//m_uTimerAnimation = CTimer::SetTimer(30);
 
 	// 初始化Tooltip
 	m_wndToolTip.Create(this);

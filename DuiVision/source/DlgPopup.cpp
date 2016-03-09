@@ -196,7 +196,7 @@ int CDlgPopup::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	//DrawWindow();
 
 	//Æô¶¯¶¨Ê±Æ÷
-	m_uTimerAnimation = CTimer::SetTimer(30);
+	//m_uTimerAnimation = CTimer::SetTimer(30);
 
 	m_bInit = true;
 
